@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: hotel_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-hotelrestaurant}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hotel_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: hotel_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      SEED_DB: ${SEED_DB:-false}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-hotelrestaurant}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:80}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - hotel_network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: hotel_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - hotel_network
+
+volumes:
+  postgres_data:
+
+networks:
+  hotel_network:
+    driver: bridge

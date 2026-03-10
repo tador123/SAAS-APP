@@ -1,0 +1,48 @@
+# Environment (NEVER commit secrets)
+.env
+.env.local
+.env.production
+backend/.env
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Build outputs
+web-admin/dist/
+desktop/src-tauri/target/
+mobile/.dart_tool/
+mobile/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+postgres_data/
+
+# Logs
+logs/
+*.log
+
+# Backend
+backend/logs/
+backend/uploads/
+
+# Desktop build cache
+desktop/src-tauri/target/
+
+# Flutter
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+
+# Misc
+*.tgz
+coverage/

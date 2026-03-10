@@ -1,0 +1,170 @@
+name: CI/CD — HotelSaaS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ────────────────────────────────────────────
+  # Backend: Lint + Test
+  # ────────────────────────────────────────────
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: hotelrestaurant_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpass
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run migrations
+        working-directory: backend
+        run: npm run migrate
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: hotelrestaurant_test
+          DB_USER: postgres
+          DB_PASSWORD: testpass
+          JWT_SECRET: ci-test-secret-key-not-for-production
+
+      - name: Run tests
+        working-directory: backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: hotelrestaurant_test
+          DB_USER: postgres
+          DB_PASSWORD: testpass
+          JWT_SECRET: ci-test-secret-key-not-for-production
+          PORT: 3001
+
+  # ────────────────────────────────────────────
+  # Web Admin: Test + Build
+  # ────────────────────────────────────────────
+  web-admin-test:
+    name: Web Admin Tests + Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web-admin/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web-admin
+        run: npm ci
+
+      - name: Run tests
+        working-directory: web-admin
+        run: npx vitest run
+
+      - name: Production build
+        working-directory: web-admin
+        run: npm run build
+
+      - name: Upload build artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-admin-dist
+          path: web-admin/dist/
+          retention-days: 7
+
+  # ────────────────────────────────────────────
+  # Deploy Backend to EC2 (main branch only)
+  # ────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend → EC2
+    needs: [backend-test, web-admin-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/hotelsaas
+            git pull origin main
+            cd backend
+            npm install --omit=dev
+            npm run migrate
+            pm2 restart hotelsaas-api
+            echo "Backend deployed successfully"
+
+  # ────────────────────────────────────────────
+  # Deploy Web Admin to S3 + CloudFront
+  # ────────────────────────────────────────────
+  deploy-web:
+    name: Deploy Web Admin → S3/CloudFront
+    needs: [backend-test, web-admin-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-admin-dist
+          path: dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Sync assets to S3 (immutable cache)
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET }}/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html"
+
+      - name: Upload index.html (no-cache)
+        run: |
+          aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CF_DISTRIBUTION_ID }} \
+            --paths "/index.html"

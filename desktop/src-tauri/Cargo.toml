@@ -1,0 +1,28 @@
+[package]
+name = "hotel-restaurant-desktop"
+version = "1.0.0"
+description = "HotelSaaS Desktop - Hotel & Restaurant Management"
+authors = ["HotelSaaS Team"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [
+  "tray-icon"] }
+tauri-plugin-shell = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-store = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.31", features = ["bundled"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+tokio = { version = "1", features = ["full"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5"

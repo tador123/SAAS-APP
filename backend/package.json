@@ -1,0 +1,48 @@
+{
+  "name": "hotel-restaurant-backend",
+  "version": "1.0.0",
+  "description": "Hotel + Restaurant Hospitality SaaS Backend API",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "seed": "node src/seeders/seed.js",
+    "migrate": "node src/scripts/migrate.js",
+    "migrate:rollback": "node src/scripts/migrate.js rollback",
+    "test": "jest --runInBand --forceExit",
+    "test:unit": "jest --runInBand --forceExit tests/unit",
+    "test:integration": "jest --runInBand --forceExit tests/integration",
+    "test:coverage": "jest --runInBand --forceExit --coverage"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.8",
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.35.2",
+    "socket.io": "^4.7.4",
+    "stripe": "^20.4.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^9.0.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  }
+}
