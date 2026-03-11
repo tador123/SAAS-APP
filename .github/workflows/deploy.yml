@@ -115,6 +115,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get runner IP and open SSH
+        id: ip
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
+          aws ec2 authorize-security-group-ingress \
+            --group-id sg-0e87e2be37ed02b40 \
+            --protocol tcp --port 22 \
+            --cidr "$RUNNER_IP/32" \
+            --tag-specifications "ResourceType=security-group-rule,Tags=[{Key=Name,Value=github-actions-temp}]" || true
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -129,6 +147,14 @@ jobs:
             npm run migrate
             pm2 restart hotelsaas-api
             echo "Backend deployed successfully"
+
+      - name: Revoke runner SSH access
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id sg-0e87e2be37ed02b40 \
+            --protocol tcp --port 22 \
+            --cidr "${{ steps.ip.outputs.runner_ip }}/32" || true
 
   # ────────────────────────────────────────────
   # Deploy Web Admin to S3 + CloudFront

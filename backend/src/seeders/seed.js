@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { User, Room, Guest, MenuCategory, MenuItem, RestaurantTable } = require('../models');
+const Property = require('../models/Property');
 
 const seed = async () => {
   try {
@@ -11,6 +12,24 @@ const seed = async () => {
     }
 
     require('../services/logger').info('Seeding database with initial data...');
+
+    // Create default property
+    const [property] = await Property.findOrCreate({
+      where: { slug: 'default-hotel' },
+      defaults: {
+        name: 'HotelWare Demo',
+        slug: 'default-hotel',
+        address: '123 Main Street, City, Country',
+        phone: '+1234567890',
+        email: 'info@hotel.com',
+        timezone: 'UTC',
+        currency: 'USD',
+        isActive: true,
+        subscriptionPlan: 'premium',
+        settings: { taxRate: 10, checkInTime: '14:00', checkOutTime: '11:00' },
+      },
+    });
+    const propertyId = property.id;
 
     // Create admin user (using model hooks for hashing)
     const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'Admin@Hotel2024!';
@@ -24,6 +43,7 @@ const seed = async () => {
         role: 'admin',
         phone: '+1234567890',
         subscriptionPlan: 'premium',
+        propertyId,
       },
       {
         username: 'manager',
@@ -33,6 +53,7 @@ const seed = async () => {
         lastName: 'Manager',
         role: 'manager',
         phone: '+1234567891',
+        propertyId,
       },
       {
         username: 'receptionist',
@@ -42,6 +63,7 @@ const seed = async () => {
         lastName: 'Desk',
         role: 'receptionist',
         phone: '+1234567892',
+        propertyId,
       },
     ]);
 
@@ -70,6 +92,7 @@ const seed = async () => {
           amenities: amenitiesMap[type],
           maxOccupancy: type === 'suite' ? 4 : type === 'single' ? 1 : 2,
           description: `${type.charAt(0).toUpperCase() + type.slice(1)} room on floor ${floor}`,
+          propertyId,
         });
       }
     }
@@ -77,20 +100,20 @@ const seed = async () => {
 
     // Create sample guests
     await Guest.bulkCreate([
-      { firstName: 'John', lastName: 'Smith', email: 'john@example.com', phone: '+1555000001', nationality: 'US', idType: 'passport', idNumber: 'US123456' },
-      { firstName: 'Emma', lastName: 'Johnson', email: 'emma@example.com', phone: '+1555000002', nationality: 'UK', idType: 'passport', idNumber: 'UK789012' },
-      { firstName: 'Carlos', lastName: 'Garcia', email: 'carlos@example.com', phone: '+1555000003', nationality: 'ES', idType: 'national_id', idNumber: 'ES345678' },
-      { firstName: 'Yuki', lastName: 'Tanaka', email: 'yuki@example.com', phone: '+1555000004', nationality: 'JP', idType: 'passport', idNumber: 'JP901234', vipStatus: true },
-      { firstName: 'Marie', lastName: 'Dupont', email: 'marie@example.com', phone: '+1555000005', nationality: 'FR', idType: 'national_id', idNumber: 'FR567890' },
+      { firstName: 'John', lastName: 'Smith', email: 'john@example.com', phone: '+1555000001', nationality: 'US', idType: 'passport', idNumber: 'US123456', propertyId },
+      { firstName: 'Emma', lastName: 'Johnson', email: 'emma@example.com', phone: '+1555000002', nationality: 'UK', idType: 'passport', idNumber: 'UK789012', propertyId },
+      { firstName: 'Carlos', lastName: 'Garcia', email: 'carlos@example.com', phone: '+1555000003', nationality: 'ES', idType: 'national_id', idNumber: 'ES345678', propertyId },
+      { firstName: 'Yuki', lastName: 'Tanaka', email: 'yuki@example.com', phone: '+1555000004', nationality: 'JP', idType: 'passport', idNumber: 'JP901234', vipStatus: true, propertyId },
+      { firstName: 'Marie', lastName: 'Dupont', email: 'marie@example.com', phone: '+1555000005', nationality: 'FR', idType: 'national_id', idNumber: 'FR567890', propertyId },
     ]);
 
     // Create menu categories
     const categories = await MenuCategory.bulkCreate([
-      { name: 'Appetizers', description: 'Starters and light bites', sortOrder: 1 },
-      { name: 'Main Course', description: 'Signature dishes and entrees', sortOrder: 2 },
-      { name: 'Desserts', description: 'Sweet treats and pastries', sortOrder: 3 },
-      { name: 'Beverages', description: 'Drinks and refreshments', sortOrder: 4 },
-      { name: 'Breakfast', description: 'Morning meals and buffet items', sortOrder: 5 },
+      { name: 'Appetizers', description: 'Starters and light bites', sortOrder: 1, propertyId },
+      { name: 'Main Course', description: 'Signature dishes and entrees', sortOrder: 2, propertyId },
+      { name: 'Desserts', description: 'Sweet treats and pastries', sortOrder: 3, propertyId },
+      { name: 'Beverages', description: 'Drinks and refreshments', sortOrder: 4, propertyId },
+      { name: 'Breakfast', description: 'Morning meals and buffet items', sortOrder: 5, propertyId },
     ]);
 
     // Create menu items
@@ -129,6 +152,7 @@ const seed = async () => {
         capacity: i <= 4 ? 2 : i <= 8 ? 4 : i <= 10 ? 6 : 8,
         location: i <= 8 ? 'indoor' : i <= 10 ? 'outdoor' : 'terrace',
         status: 'available',
+        propertyId,
       });
     }
     await RestaurantTable.bulkCreate(tables);
