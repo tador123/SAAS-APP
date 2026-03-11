@@ -30,6 +30,9 @@ beforeAll(async () => {
 
   await sequelize.sync({ force: true });
 
+  const Property = require('../../src/models/Property');
+  const property = await Property.create({ name: 'Test Hotel', slug: 'test-hotel', isActive: true, subscriptionPlan: 'premium' });
+
   await models.User.create({
     username: 'restadmin',
     email: 'restadmin@test.com',
@@ -38,6 +41,7 @@ beforeAll(async () => {
     lastName: 'Admin',
     role: 'admin',
     isActive: true,
+    propertyId: property.id,
   });
 
   const loginRes = await request(app)

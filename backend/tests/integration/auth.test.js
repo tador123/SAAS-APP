@@ -40,6 +40,10 @@ beforeAll(async () => {
   // Sync all models (creates tables in test DB)
   await sequelize.sync({ force: true });
 
+  // Create test property
+  const Property = require('../../src/models/Property');
+  const property = await Property.create({ name: 'Test Hotel', slug: 'test-hotel', isActive: true, subscriptionPlan: 'premium' });
+
   // Create an admin user for auth tests
   const User = models.User;
   await User.create({
@@ -50,6 +54,7 @@ beforeAll(async () => {
     lastName: 'Test',
     role: 'admin',
     isActive: true,
+    propertyId: property.id,
   });
 });
 
