@@ -273,7 +273,6 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .plugin(tauri_plugin_store::Builder::default().build())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState {
             db: Mutex::new(db),
             api_base_url: Mutex::new(default_api),

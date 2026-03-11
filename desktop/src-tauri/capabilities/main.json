@@ -14,9 +14,6 @@
     "sql:default",
     "sql:allow-execute",
     "sql:allow-select",
-    "store:default",
-    "updater:default",
-    "updater:allow-check",
-    "updater:allow-download-and-install"
+    "store:default"
   ]
 }
