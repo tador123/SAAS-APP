@@ -74,7 +74,7 @@ const Property = sequelize.define('Property', {
   approvedBy: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    references: { model: 'users', key: 'id' },
+    comment: 'User ID of the system admin who approved this property',
   },
 }, {
   tableName: 'properties',
