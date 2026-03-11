@@ -29,6 +29,9 @@ beforeAll(async () => {
 
   await sequelize.sync({ force: true });
 
+  // Create sequences needed for order number generation
+  await sequelize.query('CREATE SEQUENCE IF NOT EXISTS order_number_seq START WITH 1 INCREMENT BY 1;');
+
   const Property = require('../../src/models/Property');
   const property = await Property.create({ name: 'Test Hotel', slug: 'test-hotel', isActive: true, subscriptionPlan: 'premium' });
 

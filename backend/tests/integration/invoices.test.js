@@ -29,6 +29,9 @@ beforeAll(async () => {
 
   await sequelize.sync({ force: true });
 
+  // Create sequences needed for invoice number generation
+  await sequelize.query('CREATE SEQUENCE IF NOT EXISTS invoice_number_seq START WITH 1 INCREMENT BY 1;');
+
   const Property = require('../../src/models/Property');
   const property = await Property.create({ name: 'Test Hotel', slug: 'test-hotel', isActive: true, subscriptionPlan: 'premium' });
 
@@ -102,8 +105,8 @@ describe('Invoices CRUD', () => {
         guestId,
         reservationId,
         items: [
-          { description: 'Room charges (2 nights)', amount: 600, quantity: 1 },
-          { description: 'Room service', amount: 45.50, quantity: 1 },
+          { description: 'Room charges (2 nights)', unitPrice: 600, quantity: 1 },
+          { description: 'Room service', unitPrice: 45.50, quantity: 1 },
         ],
         taxRate: 10,
         discount: 0,
@@ -149,7 +152,7 @@ describe('Invoices CRUD', () => {
       .send({
         guestId,
         reservationId,
-        items: [{ description: 'Cancelled service', amount: 100, quantity: 1 }],
+        items: [{ description: 'Cancelled service', unitPrice: 100, quantity: 1 }],
         taxRate: 0,
         discount: 0,
       });
@@ -168,7 +171,7 @@ describe('Invoices CRUD', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({
         guestId,
-        items: [{ description: 'To delete', amount: 10, quantity: 1 }],
+        items: [{ description: 'To delete', unitPrice: 10, quantity: 1 }],
         taxRate: 0,
         discount: 0,
       });

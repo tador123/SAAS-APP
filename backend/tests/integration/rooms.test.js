@@ -114,7 +114,7 @@ describe('Rooms CRUD', () => {
       .send({ price: 175.00, description: 'Updated double room' });
 
     expect(res.status).toBe(200);
-    expect(res.body.price).toBe('175.00');
+    expect(Number(res.body.price)).toBeCloseTo(175.0, 2);
     expect(res.body.description).toBe('Updated double room');
   });
 
