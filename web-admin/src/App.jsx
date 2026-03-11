@@ -17,6 +17,10 @@ import Guests from './pages/Guests';
 import Settings from './pages/Settings';
 import Users from './pages/Users';
 import AuditLogs from './pages/AuditLogs';
+import Housekeeping from './pages/Housekeeping';
+import KitchenDisplay from './pages/KitchenDisplay';
+import GuestFolio from './pages/GuestFolio';
+import QROrdering from './pages/QROrdering';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -43,6 +47,8 @@ function App() {
             <Route path="/restaurant" element={<ErrorBoundary><Restaurant /></ErrorBoundary>} />
             <Route path="/orders" element={<ErrorBoundary><Orders /></ErrorBoundary>} />
             <Route path="/guests" element={<ErrorBoundary><Guests /></ErrorBoundary>} />
+            <Route path="/housekeeping" element={<ErrorBoundary><Housekeeping /></ErrorBoundary>} />
+            <Route path="/kitchen" element={<ErrorBoundary><KitchenDisplay /></ErrorBoundary>} />
             <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           </Route>
         </Route>
@@ -50,6 +56,8 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['admin', 'manager']} />}>
           <Route element={<Layout />}>
             <Route path="/invoices" element={<ErrorBoundary><Invoices /></ErrorBoundary>} />
+            <Route path="/folio" element={<ErrorBoundary><GuestFolio /></ErrorBoundary>} />
+            <Route path="/qr-ordering" element={<ErrorBoundary><QROrdering /></ErrorBoundary>} />
             <Route path="/audit-logs" element={<ErrorBoundary><AuditLogs /></ErrorBoundary>} />
           </Route>
         </Route>

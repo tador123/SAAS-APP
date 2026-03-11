@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, UtensilsCrossed } from 'lucide-react';
+import { Plus, Edit2, Trash2, UtensilsCrossed, Upload, X } from 'lucide-react';
 import api from '../api/axios';
 import Modal from '../components/Modal';
 import { useConfirm } from '../components/ConfirmDialog';
@@ -17,6 +17,7 @@ export default function Restaurant() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
   const [submitting, withSubmit] = useSubmitting();
+  const [uploading, setUploading] = useState(false);
   const confirm = useConfirm();
 
   useEffect(() => { fetchData(); }, []);
@@ -48,9 +49,11 @@ export default function Restaurant() {
         name: item.name, categoryId: item.categoryId, price: item.price,
         description: item.description || '', preparationTime: item.preparationTime || '',
         isAvailable: item.isAvailable, isVegetarian: item.isVegetarian, isVegan: item.isVegan,
+        image: item.image || '',
       } : {
         name: '', categoryId: categories[0]?.id || '', price: '', description: '',
         preparationTime: '', isAvailable: true, isVegetarian: false, isVegan: false,
+        image: '',
       });
     } else {
       setForm(item ? {
@@ -74,6 +77,20 @@ export default function Restaurant() {
       setShowModal(false);
       fetchData();
     });
+  };
+
+  const handleMenuImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type', 'menu');
+    setUploading(true);
+    try {
+      const { data } = await api.post('/uploads/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setForm(prev => ({ ...prev, image: data.url }));
+    } catch { toast.error('Image upload failed'); }
+    finally { setUploading(false); e.target.value = ''; }
   };
 
   const handleDelete = async (type, id) => {
@@ -225,6 +242,19 @@ export default function Restaurant() {
                 <label className="flex items-center gap-2"><input type="checkbox" checked={form.isAvailable} onChange={e => setForm({...form, isAvailable: e.target.checked})} className="rounded" /><span className="text-sm">Available</span></label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={form.isVegetarian} onChange={e => setForm({...form, isVegetarian: e.target.checked})} className="rounded" /><span className="text-sm">Vegetarian</span></label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={form.isVegan} onChange={e => setForm({...form, isVegan: e.target.checked})} className="rounded" /><span className="text-sm">Vegan</span></label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item Image</label>
+                {form.image ? (
+                  <div className="relative group w-24 h-24 mb-2">
+                    <img src={form.image} alt="" className="w-24 h-24 object-cover rounded-lg border" />
+                    <button type="button" onClick={() => setForm({...form, image: ''})} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
+                  </div>
+                ) : null}
+                <label className="flex items-center gap-2 btn-secondary text-sm cursor-pointer w-fit">
+                  <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Image'}
+                  <input type="file" accept="image/*" onChange={handleMenuImageUpload} className="hidden" disabled={uploading} />
+                </label>
               </div>
             </>
           )}

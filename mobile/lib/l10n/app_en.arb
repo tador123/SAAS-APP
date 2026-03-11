@@ -122,5 +122,22 @@
     "placeholders": {
       "count": { "type": "int" }
     }
-  }
+  },
+  "housekeeping": "Housekeeping",
+  "addHousekeepingTask": "Add Housekeeping Task",
+  "noHousekeepingTasks": "No housekeeping tasks",
+  "taskType": "Task Type",
+  "priority": "Priority",
+  "kitchenDisplay": "Kitchen Display",
+  "noKitchenOrders": "No active kitchen orders",
+  "guestFolio": "Guest Folio",
+  "roomCharges": "Room Charges",
+  "restaurantCharges": "Restaurant Charges",
+  "totalPaid": "Total Paid",
+  "balance": "Balance",
+  "qrOrdering": "QR Ordering",
+  "qrActive": "Active",
+  "qrNone": "No QR",
+  "qrGenerate": "Generate QR",
+  "qrRegenerate": "Regenerate"
 }

@@ -360,6 +360,47 @@ final usersProvider =
   (ref) => UsersNotifier(),
 );
 
+// ─── Housekeeping ──────────────────────────────────────────
+class HousekeepingNotifier extends StateNotifier<AsyncListState<HousekeepingTask>> {
+  HousekeepingNotifier() : super(const AsyncListState(isLoading: true)) {
+    fetch();
+  }
+
+  Future<void> fetch() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final items = await ApiRepository.getHousekeepingTasks();
+      state = AsyncListState(items: items);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: _formatError(e));
+    }
+  }
+
+  Future<void> create(Map<String, dynamic> data) async {
+    final item = await ApiRepository.createHousekeepingTask(data);
+    state = AsyncListState(items: [...state.items, item]);
+  }
+
+  Future<void> update(int id, Map<String, dynamic> data) async {
+    final updated = await ApiRepository.updateHousekeepingTask(id, data);
+    state = AsyncListState(
+      items: state.items.map((t) => t.id == id ? updated : t).toList(),
+    );
+  }
+
+  Future<void> delete(int id) async {
+    await ApiRepository.deleteHousekeepingTask(id);
+    state = AsyncListState(
+      items: state.items.where((t) => t.id != id).toList(),
+    );
+  }
+}
+
+final housekeepingProvider =
+    StateNotifierProvider<HousekeepingNotifier, AsyncListState<HousekeepingTask>>(
+  (ref) => HousekeepingNotifier(),
+);
+
 // ─── Helpers ───────────────────────────────────────────────
 String _formatError(dynamic e) {
   if (e is DioException) {

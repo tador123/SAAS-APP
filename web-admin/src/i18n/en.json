@@ -36,7 +36,11 @@
     "guests": "Guests",
     "users": "Users",
     "auditLogs": "Audit Logs",
-    "settings": "Settings"
+    "settings": "Settings",
+    "housekeeping": "Housekeeping",
+    "kitchen": "Kitchen Display",
+    "folio": "Guest Folio",
+    "qrOrdering": "QR Ordering"
   },
   "auth": {
     "signIn": "Sign in",
@@ -160,5 +164,72 @@
     "language": "Language",
     "darkMode": "Dark Mode",
     "appearance": "Appearance"
+  },
+  "housekeeping": {
+    "title": "Housekeeping",
+    "subtitle": "Manage room cleaning and maintenance tasks",
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "room": "Room",
+    "assignee": "Assigned To",
+    "priority": "Priority",
+    "type": "Task Type",
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "inspected": "Inspected",
+    "markComplete": "Mark Complete",
+    "inspect": "Inspect",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent",
+    "checkoutClean": "Checkout Clean",
+    "dailyClean": "Daily Clean",
+    "deepClean": "Deep Clean",
+    "maintenance": "Maintenance",
+    "inspection": "Inspection",
+    "noTasks": "No housekeeping tasks"
+  },
+  "kitchen": {
+    "title": "Kitchen Display",
+    "subtitle": "Real-time kitchen order management",
+    "newOrders": "New Orders",
+    "preparing": "Preparing",
+    "ready": "Ready",
+    "noOrders": "No active orders",
+    "markPreparing": "Start Preparing",
+    "markReady": "Mark Ready",
+    "markServed": "Mark Served",
+    "elapsed": "Elapsed",
+    "items": "items"
+  },
+  "folio": {
+    "title": "Guest Folio",
+    "subtitle": "Consolidated guest billing",
+    "roomCharges": "Room Charges",
+    "restaurantCharges": "Restaurant Charges",
+    "totalCharges": "Total Charges",
+    "totalPaid": "Total Paid",
+    "balance": "Balance Due",
+    "selectGuest": "Select a guest to view folio",
+    "printFolio": "Print Folio",
+    "noCharges": "No charges found"
+  },
+  "qr": {
+    "title": "QR Table Ordering",
+    "subtitle": "Manage QR codes for table self-ordering",
+    "generateQR": "Generate QR",
+    "regenerateQR": "Regenerate QR",
+    "printQR": "Print QR Code",
+    "noQR": "No QR code generated",
+    "active": "QR Active",
+    "scanToOrder": "Scan to Order"
+  },
+  "uploads": {
+    "uploadImage": "Upload Image",
+    "removeImage": "Remove Image",
+    "dragDrop": "Drag & drop or click to upload",
+    "maxSize": "Max 5MB per image"
   }
 }

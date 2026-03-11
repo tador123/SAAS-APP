@@ -36,7 +36,11 @@
     "guests": "Clients",
     "users": "Utilisateurs",
     "auditLogs": "Journal d'audit",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "housekeeping": "Ménage",
+    "kitchen": "Affichage Cuisine",
+    "folio": "Folio Client",
+    "qrOrdering": "Commande QR"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -160,5 +164,72 @@
     "language": "Langue",
     "darkMode": "Mode Sombre",
     "appearance": "Apparence"
+  },
+  "housekeeping": {
+    "title": "Ménage",
+    "subtitle": "Gérer les tâches de nettoyage et maintenance",
+    "addTask": "Ajouter une Tâche",
+    "editTask": "Modifier la Tâche",
+    "room": "Chambre",
+    "assignee": "Assigné à",
+    "priority": "Priorité",
+    "type": "Type de Tâche",
+    "pending": "En attente",
+    "inProgress": "En cours",
+    "completed": "Terminée",
+    "inspected": "Inspectée",
+    "markComplete": "Marquer Terminée",
+    "inspect": "Inspecter",
+    "low": "Basse",
+    "medium": "Moyenne",
+    "high": "Haute",
+    "urgent": "Urgente",
+    "checkoutClean": "Nettoyage Départ",
+    "dailyClean": "Nettoyage Quotidien",
+    "deepClean": "Nettoyage Profond",
+    "maintenance": "Maintenance",
+    "inspection": "Inspection",
+    "noTasks": "Aucune tâche de ménage"
+  },
+  "kitchen": {
+    "title": "Affichage Cuisine",
+    "subtitle": "Gestion des commandes en temps réel",
+    "newOrders": "Nouvelles Commandes",
+    "preparing": "En préparation",
+    "ready": "Prêtes",
+    "noOrders": "Aucune commande active",
+    "markPreparing": "Commencer Préparation",
+    "markReady": "Marquer Prête",
+    "markServed": "Marquer Servie",
+    "elapsed": "Écoulé",
+    "items": "articles"
+  },
+  "folio": {
+    "title": "Folio Client",
+    "subtitle": "Facturation consolidée du client",
+    "roomCharges": "Frais de Chambre",
+    "restaurantCharges": "Frais de Restaurant",
+    "totalCharges": "Total des Frais",
+    "totalPaid": "Total Payé",
+    "balance": "Solde Dû",
+    "selectGuest": "Sélectionnez un client pour voir le folio",
+    "printFolio": "Imprimer le Folio",
+    "noCharges": "Aucun frais trouvé"
+  },
+  "qr": {
+    "title": "Commande QR de Table",
+    "subtitle": "Gérer les codes QR pour les commandes en libre-service",
+    "generateQR": "Générer QR",
+    "regenerateQR": "Régénérer QR",
+    "printQR": "Imprimer le Code QR",
+    "noQR": "Aucun code QR généré",
+    "active": "QR Actif",
+    "scanToOrder": "Scanner pour Commander"
+  },
+  "uploads": {
+    "uploadImage": "Télécharger Image",
+    "removeImage": "Supprimer Image",
+    "dragDrop": "Glissez-déposez ou cliquez pour télécharger",
+    "maxSize": "Maximum 5 Mo par image"
   }
 }

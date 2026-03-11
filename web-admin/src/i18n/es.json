@@ -36,7 +36,11 @@
     "guests": "Huéspedes",
     "users": "Usuarios",
     "auditLogs": "Registros de auditoría",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "housekeeping": "Limpieza",
+    "kitchen": "Pantalla de Cocina",
+    "folio": "Folio de Huésped",
+    "qrOrdering": "Pedidos QR"
   },
   "auth": {
     "signIn": "Iniciar sesión",
@@ -160,5 +164,72 @@
     "language": "Idioma",
     "darkMode": "Modo Oscuro",
     "appearance": "Apariencia"
+  },
+  "housekeeping": {
+    "title": "Limpieza",
+    "subtitle": "Gestionar tareas de limpieza y mantenimiento",
+    "addTask": "Agregar Tarea",
+    "editTask": "Editar Tarea",
+    "room": "Habitación",
+    "assignee": "Asignado a",
+    "priority": "Prioridad",
+    "type": "Tipo de Tarea",
+    "pending": "Pendiente",
+    "inProgress": "En Progreso",
+    "completed": "Completada",
+    "inspected": "Inspeccionada",
+    "markComplete": "Marcar Completa",
+    "inspect": "Inspeccionar",
+    "low": "Baja",
+    "medium": "Media",
+    "high": "Alta",
+    "urgent": "Urgente",
+    "checkoutClean": "Limpieza de Salida",
+    "dailyClean": "Limpieza Diaria",
+    "deepClean": "Limpieza Profunda",
+    "maintenance": "Mantenimiento",
+    "inspection": "Inspección",
+    "noTasks": "Sin tareas de limpieza"
+  },
+  "kitchen": {
+    "title": "Pantalla de Cocina",
+    "subtitle": "Gestión de pedidos en tiempo real",
+    "newOrders": "Nuevos Pedidos",
+    "preparing": "Preparando",
+    "ready": "Listos",
+    "noOrders": "Sin pedidos activos",
+    "markPreparing": "Comenzar Preparación",
+    "markReady": "Marcar Listo",
+    "markServed": "Marcar Servido",
+    "elapsed": "Transcurrido",
+    "items": "artículos"
+  },
+  "folio": {
+    "title": "Folio de Huésped",
+    "subtitle": "Facturación consolidada del huésped",
+    "roomCharges": "Cargos de Habitación",
+    "restaurantCharges": "Cargos de Restaurante",
+    "totalCharges": "Total de Cargos",
+    "totalPaid": "Total Pagado",
+    "balance": "Saldo Pendiente",
+    "selectGuest": "Seleccione un huésped para ver el folio",
+    "printFolio": "Imprimir Folio",
+    "noCharges": "No se encontraron cargos"
+  },
+  "qr": {
+    "title": "Pedidos QR de Mesa",
+    "subtitle": "Gestionar códigos QR para pedidos de autoservicio",
+    "generateQR": "Generar QR",
+    "regenerateQR": "Regenerar QR",
+    "printQR": "Imprimir Código QR",
+    "noQR": "No se ha generado código QR",
+    "active": "QR Activo",
+    "scanToOrder": "Escanear para Pedir"
+  },
+  "uploads": {
+    "uploadImage": "Subir Imagen",
+    "removeImage": "Eliminar Imagen",
+    "dragDrop": "Arrastra y suelta o haz clic para subir",
+    "maxSize": "Máximo 5MB por imagen"
   }
 }

@@ -223,6 +223,54 @@ class ApiRepository {
     await _dio.delete('/restaurant/tables/$id');
   }
 
+  // ─── Housekeeping ─────────────────────────────────────────
+  static Future<List<HousekeepingTask>> getHousekeepingTasks() async {
+    final res = await _dio.get('/housekeeping');
+    return _parsePaginated(res.data, HousekeepingTask.fromJson).data;
+  }
+
+  static Future<HousekeepingTask> createHousekeepingTask(Map<String, dynamic> data) async {
+    final res = await _dio.post('/housekeeping', data: data);
+    return HousekeepingTask.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  static Future<HousekeepingTask> updateHousekeepingTask(int id, Map<String, dynamic> data) async {
+    final res = await _dio.put('/housekeeping/$id', data: data);
+    return HousekeepingTask.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  static Future<void> deleteHousekeepingTask(int id) async {
+    await _dio.delete('/housekeeping/$id');
+  }
+
+  // ─── Kitchen Display ──────────────────────────────────────
+  static Future<List<Order>> getKitchenOrders() async {
+    final res = await _dio.get('/kitchen/orders');
+    return _parseList(res.data, Order.fromJson);
+  }
+
+  static Future<Map<String, dynamic>> getKitchenStats() async {
+    final res = await _dio.get('/kitchen/stats');
+    return res.data as Map<String, dynamic>;
+  }
+
+  // ─── Guest Folio ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> getGuestFolio(int guestId) async {
+    final res = await _dio.get('/folio/$guestId');
+    return res.data as Map<String, dynamic>;
+  }
+
+  // ─── QR Ordering ──────────────────────────────────────────
+  static Future<Map<String, dynamic>> generateQRToken(int tableId) async {
+    final res = await _dio.post('/qr/generate/$tableId');
+    return res.data as Map<String, dynamic>;
+  }
+
+  static Future<List<RestaurantTable>> getQRTables() async {
+    final res = await _dio.get('/qr/tables');
+    return _parseList(res.data, RestaurantTable.fromJson);
+  }
+
   // ─── Users (admin only) ───────────────────────────────────
   static Future<List<User>> getUsers() async {
     final res = await _dio.get('/users');

@@ -143,6 +143,18 @@ class WebSocketService {
     if (!this.io) return;
     this.io.to('dashboard').emit('dashboard:refresh');
   }
+
+  /** Housekeeping task updated */
+  emitHousekeepingUpdate(task) {
+    if (!this.io) return;
+    this.io.to('housekeeping').to('dashboard').emit('housekeeping:update', task);
+  }
+
+  /** Kitchen display refresh */
+  emitKitchenRefresh() {
+    if (!this.io) return;
+    this.io.to('kitchen').emit('kitchen:refresh');
+  }
 }
 
 // Singleton

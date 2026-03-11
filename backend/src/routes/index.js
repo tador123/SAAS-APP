@@ -13,6 +13,10 @@ const uploadRoutes = require('./uploads');
 const notificationRoutes = require('./notifications');
 const propertyRoutes = require('./properties');
 const userRoutes = require('./users');
+const housekeepingRoutes = require('./housekeeping');
+const kitchenRoutes = require('./kitchen');
+const folioRoutes = require('./folio');
+const qrOrderingRoutes = require('./qrOrdering');
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomRoutes);
@@ -27,5 +31,9 @@ router.use('/uploads', uploadRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/properties', propertyRoutes);
 router.use('/users', userRoutes);
+router.use('/housekeeping', housekeepingRoutes);
+router.use('/kitchen', kitchenRoutes);
+router.use('/folio', folioRoutes);
+router.use('/qr', qrOrderingRoutes);
 
 module.exports = router;

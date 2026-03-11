@@ -20,6 +20,10 @@ import 'screens/invoice_detail_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/users_screen.dart';
+import 'screens/housekeeping_screen.dart';
+import 'screens/kitchen_display_screen.dart';
+import 'screens/guest_folio_screen.dart';
+import 'screens/qr_ordering_screen.dart';
 import 'services/auth_service.dart';
 import 'services/offline_service.dart';
 import 'services/notification_service.dart';
@@ -157,6 +161,10 @@ final GoRouter _router = GoRouter(
         ),
         GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
         GoRoute(path: '/users', builder: (context, state) => const UsersScreen()),
+        GoRoute(path: '/housekeeping', builder: (context, state) => const HousekeepingScreen()),
+        GoRoute(path: '/kitchen', builder: (context, state) => const KitchenDisplayScreen()),
+        GoRoute(path: '/folio', builder: (context, state) => const GuestFolioScreen()),
+        GoRoute(path: '/qr-ordering', builder: (context, state) => const QROrderingScreen()),
       ],
     ),
   ],
@@ -250,16 +258,46 @@ class _MainShellState extends State<MainShell> {
     NavigationDestination(icon: Icon(Icons.bed_outlined), selectedIcon: Icon(Icons.bed), label: 'Rooms'),
     NavigationDestination(icon: Icon(Icons.calendar_today_outlined), selectedIcon: Icon(Icons.calendar_today), label: 'Bookings'),
     NavigationDestination(icon: Icon(Icons.restaurant_outlined), selectedIcon: Icon(Icons.restaurant), label: 'Restaurant'),
-    NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Settings'),
+    NavigationDestination(icon: Icon(Icons.more_horiz_outlined), selectedIcon: Icon(Icons.more_horiz), label: 'More'),
   ];
 
-  final _routes = ['/', '/rooms', '/reservations', '/restaurant', '/settings'];
+  final _routes = ['/', '/rooms', '/reservations', '/restaurant', ''];
 
   int _getIndexForLocation(String location) {
-    for (int i = 0; i < _routes.length; i++) {
+    // New feature routes map to "More" tab (index 4)
+    for (final r in ['/housekeeping', '/kitchen', '/folio', '/qr-ordering', '/settings', '/users']) {
+      if (location == r || location.startsWith('$r/')) return 4;
+    }
+    for (int i = 0; i < _routes.length - 1; i++) {
       if (location == _routes[i] || location.startsWith('${_routes[i]}/')) return i;
     }
     return 0;
+  }
+
+  void _showMoreMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(leading: const Icon(Icons.cleaning_services), title: const Text('Housekeeping'),
+              onTap: () { Navigator.pop(ctx); context.go('/housekeeping'); }),
+            ListTile(leading: const Icon(Icons.soup_kitchen), title: const Text('Kitchen Display'),
+              onTap: () { Navigator.pop(ctx); context.go('/kitchen'); }),
+            ListTile(leading: const Icon(Icons.receipt_long), title: const Text('Guest Folio'),
+              onTap: () { Navigator.pop(ctx); context.go('/folio'); }),
+            ListTile(leading: const Icon(Icons.qr_code), title: const Text('QR Ordering'),
+              onTap: () { Navigator.pop(ctx); context.go('/qr-ordering'); }),
+            const Divider(),
+            ListTile(leading: const Icon(Icons.settings), title: const Text('Settings'),
+              onTap: () { Navigator.pop(ctx); context.go('/settings'); }),
+            ListTile(leading: const Icon(Icons.people), title: const Text('Users'),
+              onTap: () { Navigator.pop(ctx); context.go('/users'); }),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -281,7 +319,11 @@ class _MainShellState extends State<MainShell> {
           NavigationBar(
             selectedIndex: currentIndex,
             onDestinationSelected: (index) {
-              context.go(_routes[index]);
+              if (index == 4) {
+                _showMoreMenu(context);
+              } else {
+                context.go(_routes[index]);
+              }
             },
             destinations: _destinations,
           ),

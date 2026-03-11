@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, BedDouble, Search, Download, Printer, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit2, Trash2, BedDouble, Search, Download, Printer, ArrowUpDown, Upload, X } from 'lucide-react';
 import api from '../api/axios';
 import Modal from '../components/Modal';
 import StatusBadge from '../components/StatusBadge';
@@ -24,7 +24,7 @@ const roomCSVColumns = [
 
 const defaultForm = {
   roomNumber: '', type: 'double', floor: 1, price: '', status: 'available',
-  maxOccupancy: 2, description: '', amenities: [],
+  maxOccupancy: 2, description: '', amenities: [], images: [],
 };
 
 export default function Rooms() {
@@ -37,6 +37,7 @@ export default function Rooms() {
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [submitting, withSubmit] = useSubmitting();
+  const [uploading, setUploading] = useState(false);
   const confirm = useConfirm();
   const debouncedSearch = useDebounce(search, 300);
   const { sorted: sortedRooms, sortField, sortDir, requestSort } = useSortable(rooms, 'roomNumber', 'asc');
@@ -95,9 +96,26 @@ export default function Rooms() {
       maxOccupancy: room.maxOccupancy,
       description: room.description || '',
       amenities: room.amenities || [],
+      images: room.images || [],
     });
     setShowModal(true);
   };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type', 'room');
+    setUploading(true);
+    try {
+      const { data } = await api.post('/uploads/image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setForm(prev => ({ ...prev, images: [...(prev.images || []), data.url] }));
+    } catch { toast.error('Image upload failed'); }
+    finally { setUploading(false); e.target.value = ''; }
+  };
+
+  const removeImage = (idx) => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }));
 
   const handleDelete = async (id) => {
     const ok = await confirm({ title: 'Delete Room', message: 'Are you sure you want to delete this room?' });
@@ -255,6 +273,21 @@ export default function Rooms() {
           <div>
             <label htmlFor="room-desc" className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea id="room-desc" value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="input-field" rows="2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Room Images</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(form.images || []).map((img, idx) => (
+                <div key={idx} className="relative group w-20 h-20">
+                  <img src={img} alt="" className="w-20 h-20 object-cover rounded-lg border" />
+                  <button type="button" onClick={() => removeImage(idx)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
+                </div>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 btn-secondary text-sm cursor-pointer w-fit">
+              <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload Image'}
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+            </label>
           </div>
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={submitting} className="btn-primary flex-1">{submitting ? 'Saving...' : editing ? 'Save Changes' : 'Create Room'}</button>

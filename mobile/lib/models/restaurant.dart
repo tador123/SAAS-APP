@@ -96,6 +96,7 @@ class RestaurantTable {
   final int capacity;
   final String status;
   final String? location;
+  final String? qrToken;
 
   const RestaurantTable({
     required this.id,
@@ -103,6 +104,7 @@ class RestaurantTable {
     this.capacity = 4,
     required this.status,
     this.location,
+    this.qrToken,
   });
 
   factory RestaurantTable.fromJson(Map<String, dynamic> json) =>
@@ -112,6 +114,7 @@ class RestaurantTable {
         capacity: _toInt(json['capacity']) ?? 4,
         status: json['status']?.toString() ?? 'available',
         location: json['location']?.toString(),
+        qrToken: json['qrToken']?.toString(),
       );
 
   static int? _toInt(dynamic v) => v is int ? v : v is num ? v.toInt() : v is String ? int.tryParse(v) : null;

@@ -112,5 +112,22 @@
   "french": "Francés",
   "perNight": "por noche",
   "nights": "{count, plural, =1{1 noche} other{{count} noches}}",
-  "nItems": "{count, plural, =1{1 artículo} other{{count} artículos}}"
+  "nItems": "{count, plural, =1{1 artículo} other{{count} artículos}}",
+  "housekeeping": "Limpieza",
+  "addHousekeepingTask": "Agregar tarea de limpieza",
+  "noHousekeepingTasks": "Sin tareas de limpieza",
+  "taskType": "Tipo de tarea",
+  "priority": "Prioridad",
+  "kitchenDisplay": "Pantalla de cocina",
+  "noKitchenOrders": "Sin pedidos activos en cocina",
+  "guestFolio": "Folio del huésped",
+  "roomCharges": "Cargos de habitación",
+  "restaurantCharges": "Cargos de restaurante",
+  "totalPaid": "Total pagado",
+  "balance": "Saldo",
+  "qrOrdering": "Pedidos por QR",
+  "qrActive": "Activo",
+  "qrNone": "Sin QR",
+  "qrGenerate": "Generar QR",
+  "qrRegenerate": "Regenerar"
 }
