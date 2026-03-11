@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { BrandingProvider } from './context/BrandingContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import App from './App';
 import './i18n'; // Initialize i18next
@@ -27,9 +28,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AuthProvider>
-            <ConfirmProvider>
-              <App />
-            </ConfirmProvider>
+            <BrandingProvider>
+              <ConfirmProvider>
+                <App />
+              </ConfirmProvider>
+            </BrandingProvider>
             <Toaster
             position="top-right"
             toastOptions={{

@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../i18n';
+import { useAuth } from '../context/AuthContext';
+import { useBranding } from '../context/BrandingContext';
 import {
   LayoutDashboard,
   BedDouble,
@@ -32,6 +34,8 @@ const navItems = [
 
 export default function Sidebar({ open, onClose }) {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
+  const { branding } = useBranding();
 
   return (
     <>
@@ -40,20 +44,31 @@ export default function Sidebar({ open, onClose }) {
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onClose} />
       )}
 
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-hotel-dark text-white transform transition-transform duration-200 ease-in-out
-        lg:static lg:translate-x-0 lg:flex lg:flex-col
-        ${open ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        {/* Logo */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 text-white transform transition-transform duration-200 ease-in-out
+          lg:static lg:translate-x-0 lg:flex lg:flex-col
+          ${open ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        style={{ backgroundColor: branding.sidebarColor }}
+      >
+        {/* Logo / Brand */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-hotel-gold rounded-lg flex items-center justify-center">
-              <Building2 size={24} className="text-hotel-dark" />
-            </div>
+            {branding.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.brandName}
+                className="w-10 h-10 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: branding.accentColor }}>
+                <Building2 size={24} className="text-white" />
+              </div>
+            )}
             <div>
-              <h1 className="text-lg font-bold text-white">HotelSaaS</h1>
-              <p className="text-xs text-gray-400">Hospitality Platform</p>
+              <h1 className="text-lg font-bold text-white truncate max-w-[140px]">{branding.brandName}</h1>
+              <p className="text-xs text-gray-400 truncate max-w-[140px]">{branding.tagline}</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden p-1 text-gray-400 hover:text-white">
@@ -100,8 +115,8 @@ export default function Sidebar({ open, onClose }) {
               ))}
             </select>
           </div>
-          <div className="px-3 py-2 bg-hotel-accent/50 rounded-lg">
-            <p className="text-xs text-hotel-gold font-medium">Free Plan</p>
+          <div className="px-3 py-2 bg-white/5 rounded-lg">
+            <p className="text-xs font-medium capitalize" style={{ color: branding.accentColor }}>{user?.subscriptionPlan || 'Free'} Plan</p>
             <p className="text-xs text-gray-400 mt-0.5">Upgrade for more features</p>
           </div>
         </div>

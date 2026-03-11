@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Crown, Check, Building2, Monitor, Smartphone, Keyboard, Wifi, HardDrive, Printer, Bell, Edit2, Lock, Eye, EyeOff, AlertTriangle, ArrowUp, ArrowDown, Zap, CreditCard } from 'lucide-react';
+import { useBranding, DEFAULT_BRANDING } from '../context/BrandingContext';
+import { Crown, Check, Building2, Monitor, Smartphone, Keyboard, Wifi, HardDrive, Printer, Bell, Edit2, Lock, Eye, EyeOff, AlertTriangle, ArrowUp, ArrowDown, Zap, CreditCard, Palette, Download, RotateCcw } from 'lucide-react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -64,6 +65,69 @@ export default function Settings() {
   const [stripeEnabled, setStripeEnabled] = useState(false);
 
   const currentPlan = user?.subscriptionPlan || 'free';
+
+  // Branding state
+  const { branding, updateBranding, resetBranding } = useBranding();
+  const [editingBranding, setEditingBranding] = useState(false);
+  const [brandingForm, setBrandingForm] = useState({});
+  const [savingBranding, setSavingBranding] = useState(false);
+  const [desktopDownloads, setDesktopDownloads] = useState(null);
+
+  // Check if custom branding is allowed by plan
+  const canCustomBranding = ['premium', 'enterprise'].includes(currentPlan);
+
+  // Fetch desktop download links
+  useEffect(() => {
+    const fetchDownloads = async () => {
+      try {
+        const { data } = await api.get('/properties/desktop-download');
+        setDesktopDownloads(data);
+      } catch (err) {
+        console.error('Failed to fetch desktop downloads:', err);
+      }
+    };
+    fetchDownloads();
+  }, []);
+
+  const handleEditBranding = () => {
+    setBrandingForm({
+      brandName: branding.brandName || '',
+      tagline: branding.tagline || '',
+      logoUrl: branding.logoUrl || '',
+      faviconUrl: branding.faviconUrl || '',
+      primaryColor: branding.primaryColor || DEFAULT_BRANDING.primaryColor,
+      accentColor: branding.accentColor || DEFAULT_BRANDING.accentColor,
+      sidebarColor: branding.sidebarColor || DEFAULT_BRANDING.sidebarColor,
+    });
+    setEditingBranding(true);
+  };
+
+  const handleSaveBranding = async (e) => {
+    e.preventDefault();
+    setSavingBranding(true);
+    try {
+      await updateBranding(brandingForm);
+      toast.success('Branding updated! Changes are live.');
+      setEditingBranding(false);
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to update branding');
+    } finally {
+      setSavingBranding(false);
+    }
+  };
+
+  const handleResetBranding = async () => {
+    setSavingBranding(true);
+    try {
+      await resetBranding();
+      toast.success('Branding reset to defaults');
+      setEditingBranding(false);
+    } catch (error) {
+      toast.error('Failed to reset branding');
+    } finally {
+      setSavingBranding(false);
+    }
+  };
 
   // Fetch subscription info + payment status on mount
   useEffect(() => {
@@ -295,6 +359,199 @@ export default function Settings() {
           </form>
         ) : (
           <p className="text-sm text-gray-500">Use a strong password with at least 8 characters, including uppercase letters, numbers, and special characters.</p>
+        )}
+      </div>
+
+      {/* ─── Hotel Branding ─────────────────────────────────────── */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Palette size={20} className="text-primary-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Hotel Branding</h2>
+            {!canCustomBranding && (
+              <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium flex items-center gap-1">
+                <Crown size={12} /> Premium+
+              </span>
+            )}
+          </div>
+          {!editingBranding && (
+            <button onClick={handleEditBranding} disabled={!canCustomBranding}
+              className={`btn-secondary flex items-center gap-1 text-sm ${!canCustomBranding ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <Edit2 size={14} /> Customize
+            </button>
+          )}
+        </div>
+
+        {!canCustomBranding && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-yellow-800 flex items-start gap-2">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+              Custom branding is available on Premium and Enterprise plans. Upgrade your plan to personalize your hotel's app name, logo, and colors.
+            </p>
+          </div>
+        )}
+
+        {editingBranding ? (
+          <form onSubmit={handleSaveBranding} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="brand-name" className="block text-sm font-medium text-gray-700 mb-1">Hotel / Brand Name</label>
+                <input id="brand-name" value={brandingForm.brandName}
+                  onChange={e => setBrandingForm({ ...brandingForm, brandName: e.target.value })}
+                  className="input-field" placeholder="e.g. Grand Palace Hotel" maxLength={100} required />
+                <p className="text-xs text-gray-400 mt-1">Displayed in sidebar, page title, and reports</p>
+              </div>
+              <div>
+                <label htmlFor="brand-tagline" className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+                <input id="brand-tagline" value={brandingForm.tagline}
+                  onChange={e => setBrandingForm({ ...brandingForm, tagline: e.target.value })}
+                  className="input-field" placeholder="e.g. Luxury Hospitality" maxLength={200} />
+                <p className="text-xs text-gray-400 mt-1">Shown below the brand name in sidebar</p>
+              </div>
+              <div>
+                <label htmlFor="brand-logo" className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
+                <input id="brand-logo" value={brandingForm.logoUrl}
+                  onChange={e => setBrandingForm({ ...brandingForm, logoUrl: e.target.value })}
+                  className="input-field" placeholder="https://example.com/logo.png" type="url" />
+                <p className="text-xs text-gray-400 mt-1">Square image recommended (40×40px min)</p>
+              </div>
+              <div>
+                <label htmlFor="brand-favicon" className="block text-sm font-medium text-gray-700 mb-1">Favicon URL</label>
+                <input id="brand-favicon" value={brandingForm.faviconUrl}
+                  onChange={e => setBrandingForm({ ...brandingForm, faviconUrl: e.target.value })}
+                  className="input-field" placeholder="https://example.com/favicon.ico" type="url" />
+                <p className="text-xs text-gray-400 mt-1">Browser tab icon (16×16 or 32×32px)</p>
+              </div>
+            </div>
+
+            {/* Color pickers */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-3">Brand Colors</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="brand-primary" className="block text-xs text-gray-500 mb-1">Primary Color</label>
+                  <div className="flex items-center gap-2">
+                    <input id="brand-primary" type="color" value={brandingForm.primaryColor}
+                      onChange={e => setBrandingForm({ ...brandingForm, primaryColor: e.target.value })}
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300" />
+                    <input value={brandingForm.primaryColor}
+                      onChange={e => setBrandingForm({ ...brandingForm, primaryColor: e.target.value })}
+                      className="input-field font-mono text-sm" placeholder="#2563eb" />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="brand-accent" className="block text-xs text-gray-500 mb-1">Accent Color</label>
+                  <div className="flex items-center gap-2">
+                    <input id="brand-accent" type="color" value={brandingForm.accentColor}
+                      onChange={e => setBrandingForm({ ...brandingForm, accentColor: e.target.value })}
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300" />
+                    <input value={brandingForm.accentColor}
+                      onChange={e => setBrandingForm({ ...brandingForm, accentColor: e.target.value })}
+                      className="input-field font-mono text-sm" placeholder="#d4a843" />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="brand-sidebar" className="block text-xs text-gray-500 mb-1">Sidebar Color</label>
+                  <div className="flex items-center gap-2">
+                    <input id="brand-sidebar" type="color" value={brandingForm.sidebarColor}
+                      onChange={e => setBrandingForm({ ...brandingForm, sidebarColor: e.target.value })}
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300" />
+                    <input value={brandingForm.sidebarColor}
+                      onChange={e => setBrandingForm({ ...brandingForm, sidebarColor: e.target.value })}
+                      className="input-field font-mono text-sm" placeholder="#1a1f2e" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live preview */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Preview</p>
+              <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: brandingForm.sidebarColor }}>
+                {brandingForm.logoUrl ? (
+                  <img src={brandingForm.logoUrl} alt="Logo preview" className="w-10 h-10 rounded-lg object-cover"
+                    onError={e => { e.target.style.display = 'none'; }} />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: brandingForm.accentColor }}>
+                    <Building2 size={24} className="text-white" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-lg font-bold text-white">{brandingForm.brandName || 'Hotel Name'}</p>
+                  <p className="text-xs text-gray-400">{brandingForm.tagline || 'Your tagline'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button type="submit" disabled={savingBranding} className="btn-primary">
+                {savingBranding ? 'Saving...' : 'Save Branding'}
+              </button>
+              <button type="button" onClick={() => setEditingBranding(false)} className="btn-secondary">Cancel</button>
+              <button type="button" onClick={handleResetBranding} disabled={savingBranding}
+                className="btn-secondary flex items-center gap-1 ml-auto text-sm text-gray-500">
+                <RotateCcw size={14} /> Reset to Defaults
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 p-4 rounded-lg flex-1" style={{ backgroundColor: branding.sidebarColor }}>
+              {branding.logoUrl ? (
+                <img src={branding.logoUrl} alt={branding.brandName} className="w-10 h-10 rounded-lg object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: branding.accentColor }}>
+                  <Building2 size={24} className="text-white" />
+                </div>
+              )}
+              <div>
+                <p className="text-lg font-bold text-white">{branding.brandName}</p>
+                <p className="text-xs text-gray-400">{branding.tagline}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200" style={{ backgroundColor: branding.primaryColor }} title="Primary" />
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200" style={{ backgroundColor: branding.accentColor }} title="Accent" />
+              <div className="w-8 h-8 rounded-full border-2 border-gray-200" style={{ backgroundColor: branding.sidebarColor }} title="Sidebar" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Desktop App Download ───────────────────────────────── */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-4">
+          <Download size={20} className="text-primary-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Download Desktop App</h2>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Get the desktop version for offline access, native printing, system notifications, and more.
+          The desktop app wraps the same admin panel with native OS features powered by Tauri.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {desktopDownloads ? Object.values(desktopDownloads.platforms).map((platform) => (
+            <a key={platform.name} href={platform.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary-300 transition-colors group">
+              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200 transition-colors">
+                <Monitor size={24} className="text-primary-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{platform.name}</p>
+                <p className="text-xs text-gray-500">{platform.ext} • {platform.size}</p>
+              </div>
+              <Download size={18} className="text-gray-400 group-hover:text-primary-600 transition-colors" />
+            </a>
+          )) : (
+            <div className="col-span-3 text-center py-6 text-gray-400">
+              <Monitor size={32} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">Loading download links...</p>
+            </div>
+          )}
+        </div>
+        {desktopDownloads && (
+          <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+            <p className="text-xs text-gray-400">Version {desktopDownloads.version} • {desktopDownloads.releaseNotes}</p>
+          </div>
         )}
       </div>
 
