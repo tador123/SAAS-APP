@@ -78,7 +78,7 @@ pub async fn sync_pending_mutations(state: &AppState) -> Result<SyncStatus, Stri
         let mut stmt = db
             .prepare("SELECT id, method, path, body FROM pending_mutations ORDER BY id ASC")
             .map_err(|e| e.to_string())?;
-        stmt.query_map([], |row| {
+        let rows: Vec<_> = stmt.query_map([], |row| {
             Ok((
                 row.get::<_, i64>(0)?,
                 row.get::<_, String>(1)?,
@@ -88,7 +88,8 @@ pub async fn sync_pending_mutations(state: &AppState) -> Result<SyncStatus, Stri
         })
         .map_err(|e| e.to_string())?
         .filter_map(|r| r.ok())
-        .collect()
+        .collect();
+        rows
     };
 
     if mutations.is_empty() {

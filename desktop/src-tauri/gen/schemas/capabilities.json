@@ -1,1 +1,1 @@
-{}
+{"main-capability":{"identifier":"main-capability","description":"Main window capability","local":true,"windows":["main"],"permissions":["core:default","shell:allow-open","notification:default","notification:allow-is-permission-granted","notification:allow-request-permission","notification:allow-notify","global-shortcut:allow-register","global-shortcut:allow-unregister","sql:default","sql:allow-execute","sql:allow-select","store:default"]}}

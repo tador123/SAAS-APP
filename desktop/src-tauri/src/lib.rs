@@ -70,7 +70,12 @@ fn create_backup(state: tauri::State<'_, AppState>) -> Result<BackupResult, Stri
     let backup_path = backup_dir.join(format!("hotelsaas_backup_{}.db", ts_str));
 
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.backup(rusqlite::DatabaseName::Main, &backup_path, None)
+    let mut dst = rusqlite::Connection::open(&backup_path)
+        .map_err(|e| format!("Failed to open backup destination: {}", e))?;
+    let backup = rusqlite::backup::Backup::new(&db, &mut dst)
+        .map_err(|e| format!("Failed to create backup: {}", e))?;
+    backup
+        .run_to_completion(5, std::time::Duration::from_millis(250), None)
         .map_err(|e| format!("Backup failed: {}", e))?;
 
     let size = std::fs::metadata(&backup_path)
