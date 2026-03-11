@@ -13,7 +13,24 @@ const seed = async () => {
 
     require('../services/logger').info('Seeding database with initial data...');
 
-    // Create default property
+    // Create system admin user (platform-level, no property)
+    const sysAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD || 'SysAdmin@2024!';
+    const existingSysAdmin = await User.findOne({ where: { role: 'system_admin' } });
+    if (!existingSysAdmin) {
+      await User.create({
+        username: 'sysadmin',
+        email: 'sysadmin@hotelware.in',
+        password: await bcrypt.hash(sysAdminPassword, 12),
+        firstName: 'System',
+        lastName: 'Administrator',
+        role: 'system_admin',
+        phone: '+0000000000',
+        propertyId: null,
+      });
+      require('../services/logger').info('System admin created: sysadmin@hotelware.in');
+    }
+
+    // Create default property (pre-approved)
     const [property] = await Property.findOrCreate({
       where: { slug: 'default-hotel' },
       defaults: {
@@ -26,6 +43,7 @@ const seed = async () => {
         currency: 'USD',
         isActive: true,
         subscriptionPlan: 'premium',
+        approvalStatus: 'approved',
         settings: { taxRate: 10, checkInTime: '14:00', checkOutTime: '11:00' },
       },
     });
@@ -158,7 +176,8 @@ const seed = async () => {
     await RestaurantTable.bulkCreate(tables);
 
     require('../services/logger').info('Database seeded successfully!');
-    require('../services/logger').info('Admin login: admin@hotel.com / [see ADMIN_DEFAULT_PASSWORD env var]');
+    require('../services/logger').info('System Admin login: sysadmin@hotelware.in / [see SYSTEM_ADMIN_PASSWORD env var]');
+    require('../services/logger').info('Property Admin login: admin@hotel.com / [see ADMIN_DEFAULT_PASSWORD env var]');
   } catch (error) {
     require('../services/logger').error('Seeding error', { error: error.message });
   }

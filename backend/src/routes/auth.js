@@ -79,7 +79,7 @@ router.post('/signup', [
       slug = `${baseSlug}-${suffix++}`;
     }
 
-    // Create property
+    // Create property (pending approval — not active until system admin approves)
     const property = await Property.create({
       name: propertyName,
       slug,
@@ -89,9 +89,11 @@ router.post('/signup', [
       country: country || null,
       timezone: timezone || 'UTC',
       subscriptionPlan: 'free',
+      isActive: false,
+      approvalStatus: 'pending',
     }, { transaction: t });
 
-    // Create admin user for this property
+    // Create admin user for this property (inactive until approved)
     const user = await User.create({
       username: email.split('@')[0] + '-' + property.id,
       email,
@@ -100,45 +102,28 @@ router.post('/signup', [
       lastName,
       phone,
       role: 'admin',
+      isActive: false,
       propertyId: property.id,
     }, { transaction: t });
 
     await t.commit();
-
-    // Issue tokens
-    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
-    const refreshToken = await RefreshToken.createForUser(user.id);
-    setRefreshCookie(res, refreshToken.token);
 
     await AuditLog.log({
       userId: user.id,
       action: 'create',
       entityType: 'Property',
       entityId: property.id,
-      changes: { via: 'self_signup' },
+      changes: { via: 'self_signup', approvalStatus: 'pending' },
       req,
     });
 
+    // Do NOT issue tokens — account pending approval
     res.status(201).json({
-      message: 'Account created successfully! Welcome to your new property.',
-      token,
-      refreshToken: refreshToken.token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        propertyId: property.id,
-      },
+      message: 'Account created successfully! Your account is pending approval by the system administrator. You will be notified once approved.',
+      pendingApproval: true,
       property: {
         id: property.id,
         name: property.name,
-        slug: property.slug,
-        currency: property.currency,
-        country: property.country,
-        subscriptionPlan: property.subscriptionPlan,
       },
     });
   } catch (error) {
@@ -221,6 +206,27 @@ router.post('/login', [
 
     if (!user.isActive) {
       return res.status(403).json({ error: 'Account is deactivated' });
+    }
+
+    // Check property approval status (skip for system_admin who has no property)
+    if (user.propertyId) {
+      const userProperty = await Property.findByPk(user.propertyId);
+      if (userProperty && userProperty.approvalStatus === 'pending') {
+        return res.status(403).json({
+          error: 'Your account is pending approval by the system administrator.',
+          pendingApproval: true,
+        });
+      }
+      if (userProperty && userProperty.approvalStatus === 'rejected') {
+        return res.status(403).json({
+          error: 'Your account registration has been rejected.',
+          rejected: true,
+          reason: userProperty.rejectionReason || undefined,
+        });
+      }
+      if (userProperty && !userProperty.isActive) {
+        return res.status(403).json({ error: 'Your property account is currently inactive.' });
+      }
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

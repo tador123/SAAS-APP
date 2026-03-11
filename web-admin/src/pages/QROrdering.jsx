@@ -13,8 +13,8 @@ export default function QROrdering() {
   const loadTables = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/qr/tables');
-      setTables(data);
+      const res = await api.get('/qr/tables');
+      setTables(Array.isArray(res.data) ? res.data : res.data?.data || []);
     } catch { toast.error('Failed to load tables'); }
     finally { setLoading(false); }
   };

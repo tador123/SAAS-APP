@@ -40,7 +40,8 @@
     "housekeeping": "Housekeeping",
     "kitchen": "Kitchen Display",
     "folio": "Guest Folio",
-    "qrOrdering": "QR Ordering"
+    "qrOrdering": "QR Ordering",
+    "systemAdmin": "System Admin"
   },
   "auth": {
     "signIn": "Sign in",

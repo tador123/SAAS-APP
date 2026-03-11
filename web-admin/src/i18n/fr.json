@@ -40,7 +40,8 @@
     "housekeeping": "Ménage",
     "kitchen": "Affichage Cuisine",
     "folio": "Folio Client",
-    "qrOrdering": "Commande QR"
+    "qrOrdering": "Commande QR",
+    "systemAdmin": "Admin Système"
   },
   "auth": {
     "signIn": "Se connecter",

@@ -24,8 +24,8 @@ export default function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Role check
-  if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
+  // Role check — system_admin can access everything
+  if (allowedRoles && allowedRoles.length > 0 && user?.role !== 'system_admin' && !allowedRoles.includes(user?.role)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">

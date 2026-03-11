@@ -57,6 +57,25 @@ const Property = sequelize.define('Property', {
     allowNull: true,
     comment: 'Stripe customer ID for property billing',
   },
+  approvalStatus: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'approved',
+    allowNull: false,
+    comment: 'Account approval status — new signups start as pending',
+  },
+  rejectionReason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  approvedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  approvedBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'users', key: 'id' },
+  },
 }, {
   tableName: 'properties',
   timestamps: true,

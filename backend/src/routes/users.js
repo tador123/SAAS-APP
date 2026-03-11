@@ -4,10 +4,10 @@ const { User } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { Op } = require('sequelize');
 
-// All routes require admin
+// All routes require admin (system_admin passes via authorize bypass)
 router.use(authenticate, authorize('admin'));
 
-// GET /api/users — List all staff users (paginated)
+// GET /api/users — List staff users (scoped to property for client admins)
 router.get('/', async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -16,11 +16,17 @@ router.get('/', async (req, res, next) => {
     const search = req.query.search || '';
 
     const where = {};
+
+    // Client admins can only see their own property's users
+    if (req.user.role !== 'system_admin') {
+      where.propertyId = req.user.propertyId;
+    }
+
     if (search) {
       where[Op.or] = [
-        { firstName: { [Op.like]: `%${search}%` } },
-        { lastName: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } },
+        { firstName: { [Op.iLike]: `%${search}%` } },
+        { lastName: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
       ];
     }
 
@@ -53,6 +59,12 @@ router.get('/:id', async (req, res, next) => {
       attributes: { exclude: ['password'] },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Client admin can only view users in their own property
+    if (req.user.role !== 'system_admin' && user.propertyId !== req.user.propertyId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     res.json({ user });
   } catch (error) {
     next(error);
@@ -75,6 +87,16 @@ router.put('/:id', [
 
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // Client admin can only update users in their own property
+    if (req.user.role !== 'system_admin' && user.propertyId !== req.user.propertyId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Prevent client admin from escalating to system_admin
+    if (req.body.role === 'system_admin' && req.user.role !== 'system_admin') {
+      return res.status(403).json({ error: 'Cannot assign system_admin role' });
+    }
 
     const allowed = ['firstName', 'lastName', 'role', 'isActive', 'phone'];
     const updates = {};
@@ -101,6 +123,10 @@ router.delete('/:id', async (req, res, next) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.id === req.user.id) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+    // Client admin can only delete users in their own property
+    if (req.user.role !== 'system_admin' && user.propertyId !== req.user.propertyId) {
+      return res.status(403).json({ error: 'Access denied' });
     }
     await user.destroy(); // paranoid soft-delete
     res.json({ message: 'User deleted' });

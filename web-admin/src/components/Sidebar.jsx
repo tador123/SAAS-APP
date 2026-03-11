@@ -21,23 +21,26 @@ import {
   ChefHat,
   FileText,
   QrCode,
+  Shield,
 } from 'lucide-react';
 
+// Nav items with optional role restrictions
 const navItems = [
   { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
-  { to: '/rooms', icon: BedDouble, labelKey: 'nav.rooms' },
-  { to: '/reservations', icon: CalendarCheck, labelKey: 'nav.reservations' },
-  { to: '/housekeeping', icon: Sparkles, labelKey: 'nav.housekeeping' },
-  { to: '/restaurant', icon: UtensilsCrossed, labelKey: 'nav.restaurant' },
-  { to: '/orders', icon: ClipboardList, labelKey: 'nav.orders' },
-  { to: '/kitchen', icon: ChefHat, labelKey: 'nav.kitchen' },
-  { to: '/invoices', icon: Receipt, labelKey: 'nav.invoices' },
-  { to: '/folio', icon: FileText, labelKey: 'nav.folio' },
-  { to: '/guests', icon: Users, labelKey: 'nav.guests' },
-  { to: '/qr-ordering', icon: QrCode, labelKey: 'nav.qrOrdering' },
-  { to: '/users', icon: UserCog, labelKey: 'nav.users' },
-  { to: '/audit-logs', icon: ScrollText, labelKey: 'nav.auditLogs' },
-  { to: '/settings', icon: Settings, labelKey: 'nav.settings' },
+  { to: '/system-admin', icon: Shield, labelKey: 'nav.systemAdmin', roles: ['system_admin'] },
+  { to: '/rooms', icon: BedDouble, labelKey: 'nav.rooms', hideFor: ['system_admin'] },
+  { to: '/reservations', icon: CalendarCheck, labelKey: 'nav.reservations', hideFor: ['system_admin'] },
+  { to: '/housekeeping', icon: Sparkles, labelKey: 'nav.housekeeping', hideFor: ['system_admin'] },
+  { to: '/restaurant', icon: UtensilsCrossed, labelKey: 'nav.restaurant', hideFor: ['system_admin'] },
+  { to: '/orders', icon: ClipboardList, labelKey: 'nav.orders', hideFor: ['system_admin'] },
+  { to: '/kitchen', icon: ChefHat, labelKey: 'nav.kitchen', hideFor: ['system_admin'] },
+  { to: '/invoices', icon: Receipt, labelKey: 'nav.invoices', roles: ['admin', 'manager'] },
+  { to: '/folio', icon: FileText, labelKey: 'nav.folio', roles: ['admin', 'manager'] },
+  { to: '/guests', icon: Users, labelKey: 'nav.guests', hideFor: ['system_admin'] },
+  { to: '/qr-ordering', icon: QrCode, labelKey: 'nav.qrOrdering', roles: ['admin', 'manager'] },
+  { to: '/users', icon: UserCog, labelKey: 'nav.users', roles: ['admin'] },
+  { to: '/audit-logs', icon: ScrollText, labelKey: 'nav.auditLogs', roles: ['admin', 'manager'] },
+  { to: '/settings', icon: Settings, labelKey: 'nav.settings', hideFor: ['system_admin'] },
 ];
 
 export default function Sidebar({ open, onClose }) {
@@ -86,7 +89,18 @@ export default function Sidebar({ open, onClose }) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
+          {navItems
+            .filter((item) => {
+              const role = user?.role;
+              // system_admin sees items with roles=['system_admin'] or no role restriction (dashboard)
+              // but hides items marked with hideFor=['system_admin']
+              if (item.hideFor?.includes(role)) return false;
+              if (item.roles) {
+                return role === 'system_admin' || item.roles.includes(role);
+              }
+              return true;
+            })
+            .map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

@@ -13,6 +13,14 @@
  *   2. Alternatively, admins can pass `X-Property-Id` header to switch context.
  */
 const tenantScope = (req, res, next) => {
+  // system_admin can operate on any property (via header) or globally
+  if (req.user?.role === 'system_admin') {
+    req.propertyId = req.headers['x-property-id']
+      ? parseInt(req.headers['x-property-id'], 10)
+      : req.user.propertyId || null;
+    return next();
+  }
+
   // Default: use the user's assigned property
   let propertyId = req.user?.propertyId;
 
@@ -34,6 +42,13 @@ const tenantScope = (req, res, next) => {
  * requests without a property (useful for global admin endpoints).
  */
 const optionalTenantScope = (req, res, next) => {
+  if (req.user?.role === 'system_admin') {
+    req.propertyId = req.headers['x-property-id']
+      ? parseInt(req.headers['x-property-id'], 10)
+      : null;
+    return next();
+  }
+
   let propertyId = req.user?.propertyId;
 
   if (req.user?.role === 'admin' && req.headers['x-property-id']) {

@@ -17,6 +17,7 @@ const housekeepingRoutes = require('./housekeeping');
 const kitchenRoutes = require('./kitchen');
 const folioRoutes = require('./folio');
 const qrOrderingRoutes = require('./qrOrdering');
+const systemAdminRoutes = require('./systemAdmin');
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomRoutes);
@@ -35,5 +36,6 @@ router.use('/housekeeping', housekeepingRoutes);
 router.use('/kitchen', kitchenRoutes);
 router.use('/folio', folioRoutes);
 router.use('/qr', qrOrderingRoutes);
+router.use('/system-admin', systemAdminRoutes);
 
 module.exports = router;

@@ -36,6 +36,8 @@ const authenticate = async (req, res, next) => {
 
 const authorize = (...roles) => {
   return (req, res, next) => {
+    // system_admin bypasses all role checks
+    if (req.user.role === 'system_admin') return next();
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Insufficient permissions.' });
     }

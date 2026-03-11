@@ -114,11 +114,20 @@ export function AuthProvider({ children }) {
 
   const signup = async ({ propertyName, firstName, lastName, email, password, phone, currency, timezone }) => {
     const { data } = await api.post('/auth/signup', { propertyName, firstName, lastName, email, password, phone, currency, timezone });
-    tokenRef.current = data.token;
-    if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
-    localStorage.setItem('user', JSON.stringify(data.user));
-    setUser(data.user);
-    scheduleRefresh(data.expiresIn || 3600);
+
+    // New signups are pending approval — don't auto-login
+    if (data.pendingApproval) {
+      return data;
+    }
+
+    // Legacy path (should not happen with new flow, but safe fallback)
+    if (data.token) {
+      tokenRef.current = data.token;
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setUser(data.user);
+      scheduleRefresh(data.expiresIn || 3600);
+    }
     return data;
   };
 
@@ -173,8 +182,8 @@ export function AuthProvider({ children }) {
     getSubscriptionInfo,
     loading,
     isAuthenticated: !!user,
-    /** Checks if user has one of the allowed roles */
-    hasRole: (...roles) => user?.role && roles.includes(user.role),
+    /** Checks if user has one of the allowed roles (system_admin passes all) */
+    hasRole: (...roles) => user?.role === 'system_admin' || (user?.role && roles.includes(user.role)),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -53,7 +53,7 @@ export default function Restaurant() {
         isAvailable: item.isAvailable, isVegetarian: item.isVegetarian, isVegan: item.isVegan,
         image: item.image || '',
       } : {
-        name: '', categoryId: categories[0]?.id || '', price: '', description: '',
+        name: '', categoryId: '', price: '', description: '',
         preparationTime: '', isAvailable: true, isVegetarian: false, isVegan: false,
         image: '',
       });
@@ -230,7 +230,8 @@ export default function Restaurant() {
                 <div><label htmlFor="mi-name" className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                   <input id="mi-name" value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} className="input-field" required /></div>
                 <div><label htmlFor="mi-category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select id="mi-category" value={form.categoryId || ''} onChange={e => setForm({...form, categoryId: parseInt(e.target.value)})} className="input-field" required>
+                  <select id="mi-category" value={form.categoryId || ''} onChange={e => setForm({...form, categoryId: e.target.value ? parseInt(e.target.value) : ''})} className="input-field" required>
+                    <option value="">Select category</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select></div>
                 <div><label htmlFor="mi-price" className="block text-sm font-medium text-gray-700 mb-1">Price ({currency})</label>

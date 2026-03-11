@@ -40,7 +40,8 @@
     "housekeeping": "Limpieza",
     "kitchen": "Pantalla de Cocina",
     "folio": "Folio de Huésped",
-    "qrOrdering": "Pedidos QR"
+    "qrOrdering": "Pedidos QR",
+    "systemAdmin": "Admin del Sistema"
   },
   "auth": {
     "signIn": "Iniciar sesión",

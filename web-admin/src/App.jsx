@@ -21,27 +21,35 @@ import Housekeeping from './pages/Housekeeping';
 import KitchenDisplay from './pages/KitchenDisplay';
 import GuestFolio from './pages/GuestFolio';
 import QROrdering from './pages/QROrdering';
+import SystemAdmin from './pages/SystemAdmin';
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+
+  // System admin should go to system admin dashboard by default
+  const defaultRoute = user?.role === 'system_admin' ? '/system-admin' : '/';
 
   return (
     <ErrorBoundary>
       <Routes>
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+          element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <Login />}
         />
         <Route
           path="/signup"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Signup />}
+          element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <Signup />}
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         {/* All authenticated users */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+            <Route path="/" element={
+              user?.role === 'system_admin'
+                ? <Navigate to="/system-admin" replace />
+                : <ErrorBoundary><Dashboard /></ErrorBoundary>
+            } />
             <Route path="/rooms" element={<ErrorBoundary><Rooms /></ErrorBoundary>} />
             <Route path="/reservations" element={<ErrorBoundary><Reservations /></ErrorBoundary>} />
             <Route path="/restaurant" element={<ErrorBoundary><Restaurant /></ErrorBoundary>} />
@@ -65,6 +73,12 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route element={<Layout />}>
             <Route path="/users" element={<ErrorBoundary><Users /></ErrorBoundary>} />
+          </Route>
+        </Route>
+        {/* System admin only */}
+        <Route element={<ProtectedRoute allowedRoles={['system_admin']} />}>
+          <Route element={<Layout />}>
+            <Route path="/system-admin" element={<ErrorBoundary><SystemAdmin /></ErrorBoundary>} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

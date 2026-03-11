@@ -191,9 +191,17 @@ function buildFallbackResponse(releasesUrl) {
 
 // ─── CRUD endpoints ───────────────────────────────────────────────
 
-// GET /api/properties — List all properties (admin only)
+// GET /api/properties — List all properties (system_admin only; client admin gets own)
 router.get('/', authenticate, authorize('admin'), async (req, res, next) => {
   try {
+    // Client admin can only see their own property
+    if (req.user.role !== 'system_admin') {
+      const property = await Property.findByPk(req.user.propertyId, {
+        include: [{ model: User, as: 'users', attributes: ['id', 'firstName', 'lastName', 'role'] }],
+      });
+      return res.json(property ? [property] : []);
+    }
+
     const properties = await Property.findAll({
       include: [{ model: User, as: 'users', attributes: ['id', 'firstName', 'lastName', 'role'] }],
       order: [['name', 'ASC']],
@@ -207,6 +215,11 @@ router.get('/', authenticate, authorize('admin'), async (req, res, next) => {
 // GET /api/properties/:id — Get single property
 router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res, next) => {
   try {
+    // Client admin/manager can only view their own property
+    if (req.user.role !== 'system_admin' && parseInt(req.params.id) !== req.user.propertyId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     const property = await Property.findByPk(req.params.id, {
       include: [{ model: User, as: 'users', attributes: ['id', 'firstName', 'lastName', 'role', 'email'] }],
     });
@@ -217,8 +230,8 @@ router.get('/:id', authenticate, authorize('admin', 'manager'), async (req, res,
   }
 });
 
-// POST /api/properties — Create a property (admin only)
-router.post('/', authenticate, authorize('admin'), [
+// POST /api/properties — Create a property (system_admin only)
+router.post('/', authenticate, authorize('system_admin'), [
   body('name').trim().notEmpty().withMessage('Property name is required'),
   body('slug').trim().isSlug().withMessage('Valid slug is required'),
   body('email').optional().isEmail().withMessage('Valid email required'),
@@ -245,6 +258,11 @@ router.put('/:id', authenticate, authorize('admin'), [
   body('email').optional().isEmail(),
 ], async (req, res, next) => {
   try {
+    // Client admin can only update their own property
+    if (req.user.role !== 'system_admin' && parseInt(req.params.id) !== req.user.propertyId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found.' });
 
@@ -256,8 +274,8 @@ router.put('/:id', authenticate, authorize('admin'), [
   }
 });
 
-// DELETE /api/properties/:id — Soft-delete a property (admin only)
-router.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
+// DELETE /api/properties/:id — Soft-delete a property (system_admin only)
+router.delete('/:id', authenticate, authorize('system_admin'), async (req, res, next) => {
   try {
     const property = await Property.findByPk(req.params.id);
     if (!property) return res.status(404).json({ error: 'Property not found.' });

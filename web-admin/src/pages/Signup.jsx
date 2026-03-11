@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { COUNTRIES, COUNTRY_CURRENCY_MAP } from '../context/CurrencyContext';
-import { Building2, Eye, EyeOff } from 'lucide-react';
+import { Building2, Eye, EyeOff, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Signup() {
@@ -18,6 +18,7 @@ export default function Signup() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
 
@@ -35,9 +36,14 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      await signup(form);
-      toast.success('Account created! Welcome to your dashboard.');
-      navigate('/');
+      const data = await signup(form);
+      if (data.pendingApproval) {
+        setPendingApproval(true);
+        toast.success('Account created! Pending admin approval.');
+      } else {
+        toast.success('Account created! Welcome to your dashboard.');
+        navigate('/');
+      }
     } catch (error) {
       toast.error(error.response?.data?.error || 'Signup failed');
     } finally {
@@ -47,8 +53,29 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex">
+      {/* Pending Approval Screen */}
+      {pendingApproval && (
+        <div className="w-full flex items-center justify-center p-8 bg-gray-50">
+          <div className="max-w-md text-center">
+            <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Clock className="w-8 h-8 text-yellow-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Account Pending Approval</h2>
+            <p className="text-gray-600 mb-6">
+              Your account has been created successfully. A system administrator will review and
+              approve your registration. You&apos;ll be able to log in once your account is approved.
+            </p>
+            <Link
+              to="/login"
+              className="btn-primary inline-block px-6 py-2.5"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      )}
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-hotel-dark relative overflow-hidden">
+      {!pendingApproval && <div className="hidden lg:flex lg:w-1/2 bg-hotel-dark relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900/90 to-hotel-dark"></div>
         <div className="relative z-10 flex flex-col justify-center px-16">
           <div className="flex items-center gap-3 mb-8">
@@ -74,10 +101,10 @@ export default function Signup() {
             )}
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Right side - Signup form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      {!pendingApproval && <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
             <div className="w-10 h-10 bg-hotel-gold rounded-lg flex items-center justify-center">
@@ -222,7 +249,7 @@ export default function Signup() {
             </Link>
           </p>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
