@@ -1,6 +1,8 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_WS_URL || (window.__TAURI__ ? 'http://localhost:3001' : window.location.origin);
+const isTauri = Boolean(window.__TAURI_INTERNALS__);
+const SOCKET_URL = import.meta.env.VITE_WS_URL
+  || (isTauri ? (localStorage.getItem('serverUrl') || 'http://localhost:3001') : window.location.origin);
 
 class WebSocketService {
   constructor() {

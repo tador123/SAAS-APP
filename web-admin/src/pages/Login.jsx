@@ -1,26 +1,35 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Building2, Eye, EyeOff } from 'lucide-react';
+import { Building2, Eye, EyeOff, Server } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { isTauri, setServerUrl, getServerUrl } from '../api/axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [serverUrl, setServerUrlState] = useState(getServerUrl());
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isTauri && !serverUrl) {
+      toast.error('Please enter your server URL');
+      return;
+    }
+    if (isTauri && serverUrl) {
+      setServerUrl(serverUrl);
+    }
     setLoading(true);
     try {
       await login(email, password);
       toast.success('Welcome back!');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Login failed');
+      toast.error(error.response?.data?.error || 'Login failed. Check your server URL and credentials.');
     } finally {
       setLoading(false);
     }
@@ -71,6 +80,23 @@ export default function Login() {
           <p className="text-gray-500 mb-8">Enter your credentials to access the dashboard</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {isTauri && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <span className="flex items-center gap-1"><Server size={14} /> Server URL</span>
+                </label>
+                <input
+                  type="url"
+                  value={serverUrl}
+                  onChange={(e) => setServerUrlState(e.target.value)}
+                  className="input-field"
+                  placeholder="https://yourdomain.com"
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-1">Your HotelSaaS server address</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input

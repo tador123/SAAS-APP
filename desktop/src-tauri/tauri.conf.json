@@ -29,7 +29,7 @@
       "iconAsTemplate": true
     },
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http://localhost:* https://localhost:* https://*.hotelsaas.com https://api.hotelsaas.com https://updates.hotelsaas.com; img-src 'self' data: asset: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+      "csp": "default-src 'self'; connect-src 'self' http: https:; img-src 'self' data: asset: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
     }
   },
   "bundle": {

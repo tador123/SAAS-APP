@@ -4,15 +4,36 @@ import axios from 'axios';
 // since the frontend is served from local files, not from nginx.
 // In browser (Docker/nginx), relative '/api' works fine.
 const isTauri = Boolean(window.__TAURI_INTERNALS__);
-const baseURL = import.meta.env.VITE_API_URL
-  || (isTauri ? 'http://localhost/api' : '/api');
+
+function getBaseURL() {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (!isTauri) return '/api';
+  // Desktop: read saved server URL or prompt user via login page
+  const saved = localStorage.getItem('serverUrl');
+  return saved ? `${saved.replace(/\/+$/, '')}/api` : '/api';
+}
 
 const api = axios.create({
-  baseURL,
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+/**
+ * Update the API base URL at runtime (used by desktop app server config).
+ */
+export function setServerUrl(url) {
+  const normalized = url.replace(/\/+$/, '');
+  localStorage.setItem('serverUrl', normalized);
+  api.defaults.baseURL = `${normalized}/api`;
+}
+
+export function getServerUrl() {
+  return localStorage.getItem('serverUrl') || '';
+}
+
+export { isTauri };
 
 // Note: The request interceptor that attaches the JWT is now managed
 // by AuthContext (token is stored in memory, not localStorage).

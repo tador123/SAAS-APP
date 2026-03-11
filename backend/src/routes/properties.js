@@ -86,42 +86,88 @@ router.put('/branding', authenticate, authorize('admin', 'manager'), [
 
 // GET /api/properties/desktop-download — Get download links for desktop app
 router.get('/desktop-download', authenticate, async (req, res) => {
-  const repoUrl = 'https://github.com/tador123/SAAS-APP/releases';
-  const latestUrl = `${repoUrl}/latest`;
+  const owner = 'tador123';
+  const repo = 'SAAS-APP';
+  const releasesUrl = `https://github.com/${owner}/${repo}/releases`;
 
-  res.json({
-    platforms: {
-      windows: {
-        name: 'Windows',
-        ext: '.msi / .exe',
-        url: latestUrl,
-        directNote: 'Download the .msi or .exe file from the latest release',
-        size: '~25 MB',
-        icon: 'windows',
+  try {
+    // Fetch latest release from GitHub API (public repo, no auth needed)
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/releases/latest`,
+      { headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'HotelSaaS-Backend' } }
+    );
+
+    if (!response.ok) {
+      // Fallback to GitHub releases page if API fails
+      return res.json(buildFallbackResponse(releasesUrl));
+    }
+
+    const release = await response.json();
+    const assets = release.assets || [];
+    const version = release.tag_name?.replace(/^v/, '') || '1.0.0';
+
+    // Match assets to platforms by file extension
+    const findAsset = (patterns) => assets.find(a =>
+      patterns.some(p => a.name.toLowerCase().includes(p))
+    );
+
+    const windowsMsi = findAsset(['.msi']);
+    const windowsExe = findAsset(['setup.exe', '-setup.exe']);
+    const macDmg = findAsset(['.dmg']);
+    const linuxDeb = findAsset(['.deb']);
+    const linuxAppImage = findAsset(['.appimage']);
+
+    const formatSize = (bytes) => {
+      if (!bytes) return 'N/A';
+      const mb = bytes / (1024 * 1024);
+      return `${mb.toFixed(1)} MB`;
+    };
+
+    res.json({
+      platforms: {
+        windows: {
+          name: 'Windows',
+          ext: windowsMsi ? '.msi' : '.exe',
+          url: (windowsMsi || windowsExe)?.browser_download_url || `${releasesUrl}/latest`,
+          size: formatSize((windowsMsi || windowsExe)?.size),
+          icon: 'windows',
+        },
+        mac: {
+          name: 'macOS',
+          ext: '.dmg',
+          url: macDmg?.browser_download_url || `${releasesUrl}/latest`,
+          size: formatSize(macDmg?.size),
+          icon: 'apple',
+        },
+        linux: {
+          name: 'Linux',
+          ext: linuxAppImage ? '.AppImage' : '.deb',
+          url: (linuxAppImage || linuxDeb)?.browser_download_url || `${releasesUrl}/latest`,
+          size: formatSize((linuxAppImage || linuxDeb)?.size),
+          icon: 'linux',
+        },
       },
-      mac: {
-        name: 'macOS',
-        ext: '.dmg',
-        url: latestUrl,
-        directNote: 'Download the .dmg file from the latest release',
-        size: '~30 MB',
-        icon: 'apple',
-      },
-      linux: {
-        name: 'Linux',
-        ext: '.deb / .AppImage',
-        url: latestUrl,
-        directNote: 'Download the .deb or .AppImage from the latest release',
-        size: '~25 MB',
-        icon: 'linux',
-      },
-    },
-    releasesUrl: latestUrl,
-    version: '1.0.0',
-    releaseNotes: 'Offline mode, system tray, and native printing support.',
-    buildInstructions: 'To trigger a desktop build, go to GitHub Actions → "Build Desktop App" → Run workflow.',
-  });
+      releasesUrl,
+      version,
+      releaseNotes: release.body?.split('\n')[0] || 'Latest release',
+    });
+  } catch {
+    res.json(buildFallbackResponse(releasesUrl));
+  }
 });
+
+function buildFallbackResponse(releasesUrl) {
+  return {
+    platforms: {
+      windows: { name: 'Windows', ext: '.msi / .exe', url: `${releasesUrl}/latest`, size: '~25 MB', icon: 'windows' },
+      mac: { name: 'macOS', ext: '.dmg', url: `${releasesUrl}/latest`, size: '~30 MB', icon: 'apple' },
+      linux: { name: 'Linux', ext: '.deb / .AppImage', url: `${releasesUrl}/latest`, size: '~25 MB', icon: 'linux' },
+    },
+    releasesUrl,
+    version: '1.0.0',
+    releaseNotes: 'Download from GitHub Releases',
+  };
+}
 
 // ─── CRUD endpoints ───────────────────────────────────────────────
 
