@@ -1,6 +1,6 @@
 [package]
 name = "hotel-restaurant-desktop"
-version = "1.0.0"
+version = "1.1.0"
 description = "HotelSaaS Desktop - Hotel & Restaurant Management"
 authors = ["HotelSaaS Team"]
 license = "MIT"
