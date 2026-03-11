@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "identifier": "com.hotelsaas.desktop",
   "build": {
-    "frontendDist": "../../web-admin/dist",
+    "frontendDist": "https://app.hotelware.in",
     "devUrl": "http://localhost:5173",
     "beforeBuildCommand": "",
     "beforeDevCommand": "cd ../web-admin && npm run dev"
@@ -29,7 +29,7 @@
       "iconAsTemplate": true
     },
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http: https:; img-src 'self' data: asset: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+      "csp": "default-src 'self' https://app.hotelware.in; connect-src 'self' http: https:; img-src 'self' data: asset: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self' https://app.hotelware.in 'unsafe-inline'; frame-src 'self' https://app.hotelware.in"
     }
   },
   "bundle": {

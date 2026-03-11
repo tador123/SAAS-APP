@@ -66,10 +66,6 @@ jobs:
         working-directory: web-admin
         run: npm ci
 
-      - name: Build web-admin
-        working-directory: web-admin
-        run: npm run build
-
       - name: Install desktop dependencies
         working-directory: desktop
         run: npm ci

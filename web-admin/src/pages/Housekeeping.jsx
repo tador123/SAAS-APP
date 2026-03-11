@@ -170,7 +170,7 @@ export default function Housekeeping() {
         </div>
       )}
 
-      <Pagination current={pagination.page} totalPages={pagination.totalPages} onPageChange={(p) => fetchTasks(p)} />
+      <Pagination pagination={pagination} onPageChange={(p) => fetchTasks(p)} />
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={t('housekeeping.addTask')}>
         <form onSubmit={handleSubmit} className="space-y-4">
