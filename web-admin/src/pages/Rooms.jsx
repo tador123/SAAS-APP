@@ -9,6 +9,7 @@ import { useSubmitting, useDebounce } from '../hooks/useHelpers';
 import { useSortable } from '../hooks/useSortable';
 import { exportCSV, printTable } from '../utils/exportData';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 const roomTypes = ['single', 'double', 'twin', 'suite', 'deluxe', 'penthouse'];
 const roomStatuses = ['available', 'occupied', 'reserved', 'maintenance', 'cleaning'];
@@ -28,6 +29,7 @@ const defaultForm = {
 };
 
 export default function Rooms() {
+  const { formatCurrency, currency } = useCurrency();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -205,7 +207,7 @@ export default function Rooms() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Price/night</span>
-                  <span className="font-semibold text-gray-900">${Number(room.price).toFixed(2)}</span>
+                  <span className="font-semibold text-gray-900">{formatCurrency(room.price)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Max occupancy</span>
@@ -256,7 +258,7 @@ export default function Rooms() {
               <input id="room-floor" type="number" value={form.floor} onChange={e => setForm({...form, floor: parseInt(e.target.value)})} className="input-field" min="0" required />
             </div>
             <div>
-              <label htmlFor="room-price" className="block text-sm font-medium text-gray-700 mb-1">Price/Night ($)</label>
+              <label htmlFor="room-price" className="block text-sm font-medium text-gray-700 mb-1">Price/Night ({currency})</label>
               <input id="room-price" type="number" step="0.01" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="input-field" min="0" required />
             </div>
             <div>

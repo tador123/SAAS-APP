@@ -6,13 +6,12 @@ import { useWebSocket } from '../hooks/useWebSocket';
 import toast from 'react-hot-toast';
 
 const statusColors = {
-  pending: 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20',
   confirmed: 'border-blue-400 bg-blue-50 dark:bg-blue-900/20',
   preparing: 'border-orange-400 bg-orange-50 dark:bg-orange-900/20',
   ready: 'border-green-400 bg-green-50 dark:bg-green-900/20',
 };
 
-const statusLabels = { pending: 'newOrders', confirmed: 'newOrders', preparing: 'preparing', ready: 'ready' };
+const statusLabels = { confirmed: 'newOrders', preparing: 'preparing', ready: 'ready' };
 
 function ElapsedTimer({ since }) {
   const [elapsed, setElapsed] = useState('');
@@ -71,18 +70,18 @@ export default function KitchenDisplay() {
   };
 
   const columns = [
-    { key: 'pending', label: t('kitchen.newOrders'), icon: Bell, color: 'text-yellow-600' },
+    { key: 'confirmed', label: t('kitchen.newOrders'), icon: Bell, color: 'text-blue-600' },
     { key: 'preparing', label: t('kitchen.preparing'), icon: ChefHat, color: 'text-orange-600' },
     { key: 'ready', label: t('kitchen.ready'), icon: CheckCircle, color: 'text-green-600' },
   ];
 
   const statusMap = {
-    pending: orders.filter(o => o.status === 'pending' || o.status === 'confirmed'),
+    confirmed: orders.filter(o => o.status === 'confirmed'),
     preparing: orders.filter(o => o.status === 'preparing'),
     ready: orders.filter(o => o.status === 'ready'),
   };
 
-  const nextAction = { pending: 'preparing', confirmed: 'preparing', preparing: 'ready', ready: 'served' };
+  const nextAction = { confirmed: 'preparing', preparing: 'ready', ready: 'served' };
 
   if (loading) {
     return (
@@ -167,7 +166,7 @@ export default function KitchenDisplay() {
                         onClick={() => updateStatus(order.id, nextAction[order.status])}
                         className="w-full btn-primary text-xs py-1.5"
                       >
-                        {order.status === 'pending' || order.status === 'confirmed'
+                        {order.status === 'confirmed'
                           ? t('kitchen.markPreparing')
                           : order.status === 'preparing'
                           ? t('kitchen.markReady')

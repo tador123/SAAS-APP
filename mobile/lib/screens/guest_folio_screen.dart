@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/providers.dart';
+import '../providers/currency_provider.dart';
 import '../services/api_repository.dart';
 
 class GuestFolioScreen extends ConsumerStatefulWidget {
@@ -91,6 +92,7 @@ class _GuestFolioScreenState extends ConsumerState<GuestFolioScreen> {
     }
     if (_folio == null) return Center(child: Text(l10n.error));
 
+    final currency = ref.watch(currencyProvider).currency;
     final summary = _folio!['summary'] as Map<String, dynamic>? ?? {};
     final reservations = (_folio!['reservations'] as List?) ?? [];
     final orders = (_folio!['orders'] as List?) ?? [];
@@ -129,18 +131,18 @@ class _GuestFolioScreenState extends ConsumerState<GuestFolioScreen> {
                 // Summary cards
                 Row(
                   children: [
-                    _summaryCard(l10n.roomCharges, summary['roomCharges'] ?? 0, Colors.blue),
+                    _summaryCard(l10n.roomCharges, summary['roomCharges'] ?? 0, Colors.blue, currency),
                     const SizedBox(width: 8),
-                    _summaryCard(l10n.restaurantCharges, summary['restaurantCharges'] ?? 0, Colors.orange),
+                    _summaryCard(l10n.restaurantCharges, summary['restaurantCharges'] ?? 0, Colors.orange, currency),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _summaryCard(l10n.totalPaid, summary['totalPaid'] ?? 0, Colors.green),
+                    _summaryCard(l10n.totalPaid, summary['totalPaid'] ?? 0, Colors.green, currency),
                     const SizedBox(width: 8),
                     _summaryCard(l10n.balance, summary['balance'] ?? 0,
-                        (summary['balance'] ?? 0) > 0 ? Colors.red : Colors.green),
+                        (summary['balance'] ?? 0) > 0 ? Colors.red : Colors.green, currency),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -153,7 +155,7 @@ class _GuestFolioScreenState extends ConsumerState<GuestFolioScreen> {
                       leading: const Icon(Icons.bed),
                       title: Text('${l10n.room} ${r['room']}'),
                       subtitle: Text('${r['checkIn']} → ${r['checkOut']} • ${r['nights']} ${l10n.nights(r['nights'] as int)}'),
-                      trailing: Text('\$${(r['total'] as num).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      trailing: Text(formatCurrency((r['total'] as num), currency), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   )),
                   const SizedBox(height: 16),
@@ -167,7 +169,7 @@ class _GuestFolioScreenState extends ConsumerState<GuestFolioScreen> {
                       leading: const Icon(Icons.restaurant),
                       title: Text(o['orderNumber']?.toString() ?? ''),
                       subtitle: Text('${(o['items'] as List?)?.length ?? 0} ${l10n.items}'),
-                      trailing: Text('\$${(o['total'] as num).toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      trailing: Text(formatCurrency((o['total'] as num), currency), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   )),
                 ],
@@ -179,7 +181,7 @@ class _GuestFolioScreenState extends ConsumerState<GuestFolioScreen> {
     );
   }
 
-  Widget _summaryCard(String label, num value, Color color) {
+  Widget _summaryCard(String label, num value, Color color, String currency) {
     return Expanded(
       child: Card(
         child: Padding(
@@ -188,7 +190,7 @@ class _GuestFolioScreenState extends ConsumerState<GuestFolioScreen> {
             children: [
               Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
               const SizedBox(height: 4),
-              Text('\$${value.toStringAsFixed(2)}',
+              Text(formatCurrency(value, currency),
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
             ],
           ),

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { COUNTRIES, COUNTRY_CURRENCY_MAP } from '../context/CurrencyContext';
 import { Building2, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -12,13 +13,23 @@ export default function Signup() {
     email: '',
     password: '',
     phone: '',
+    country: '',
+    currency: 'USD',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === 'country') {
+      const autoC = COUNTRY_CURRENCY_MAP[value] || 'USD';
+      setForm({ ...form, country: value, currency: autoC });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,6 +173,34 @@ export default function Signup() {
                 className="input-field"
                 placeholder="+1 555 123 4567"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <select
+                  name="country"
+                  value={form.country}
+                  onChange={handleChange}
+                  className="input-field"
+                >
+                  <option value="">Select country</option>
+                  {COUNTRIES.map(c => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                <input
+                  name="currency"
+                  value={form.currency}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="USD"
+                  maxLength={3}
+                />
+              </div>
             </div>
 
             <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">

@@ -9,6 +9,7 @@ import { useSortable } from '../hooks/useSortable';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { exportCSV, printTable } from '../utils/exportData';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 const orderCSVColumns = [
   { key: 'orderNumber', label: 'Order #' },
@@ -21,6 +22,7 @@ const orderCSVColumns = [
 ];
 
 export default function Orders() {
+  const { formatCurrency } = useCurrency();
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [tables, setTables] = useState([]);
@@ -196,13 +198,13 @@ export default function Orders() {
                 {(order.items || []).slice(0, 3).map((item, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <span className="text-gray-600">{item.quantity}x {item.name}</span>
-                    <span className="text-gray-900">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-gray-900">{formatCurrency(item.price * item.quantity)}</span>
                   </div>
                 ))}
                 {(order.items || []).length > 3 && <p className="text-xs text-gray-400">+{order.items.length - 3} more items</p>}
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                <span className="text-lg font-bold text-gray-900">${Number(order.total).toFixed(2)}</span>
+                <span className="text-lg font-bold text-gray-900">{formatCurrency(order.total)}</span>
                 <div className="flex gap-2">
                   {statusFlow[order.status] && (
                     <button onClick={() => updateOrderStatus(order.id, statusFlow[order.status])}
@@ -259,7 +261,7 @@ export default function Orders() {
                   <button type="button" key={item.id} onClick={() => addItem(item)}
                     className="w-full flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg text-left text-sm">
                     <span>{item.name}</span>
-                    <span className="font-medium text-primary-600">${Number(item.price).toFixed(2)}</span>
+                    <span className="font-medium text-primary-600">{formatCurrency(item.price)}</span>
                   </button>
                 ))}
               </div>
@@ -275,7 +277,7 @@ export default function Orders() {
                     <div key={item.menuItemId} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <p className="text-sm font-medium">{item.name}</p>
-                        <p className="text-xs text-gray-500">${item.price.toFixed(2)} each</p>
+                        <p className="text-xs text-gray-500">{formatCurrency(item.price)} each</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button type="button" onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)} className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center text-sm" aria-label={`Decrease quantity of ${item.name}`}>-</button>
@@ -288,9 +290,9 @@ export default function Orders() {
               </div>
               {orderItems.length > 0 && (
                 <div className="mt-3 space-y-1 text-sm">
-                  <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-gray-600"><span>Tax (10%)</span><span>${tax.toFixed(2)}</span></div>
-                  <div className="flex justify-between font-bold text-gray-900 text-base pt-1 border-t"><span>Total</span><span>${total.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                  <div className="flex justify-between text-gray-600"><span>Tax (10%)</span><span>{formatCurrency(tax)}</span></div>
+                  <div className="flex justify-between font-bold text-gray-900 text-base pt-1 border-t"><span>Total</span><span>{formatCurrency(total)}</span></div>
                 </div>
               )}
             </div>

@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { FileText, Printer, Search, DollarSign, BedDouble, UtensilsCrossed } from 'lucide-react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 export default function GuestFolio() {
   const { t } = useTranslation();
+  const { formatCurrency } = useCurrency();
   const [guests, setGuests] = useState([]);
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [folio, setFolio] = useState(null);
@@ -110,7 +112,7 @@ export default function GuestFolio() {
                   <div key={card.label} className="card text-center">
                     <card.icon size={20} className={`mx-auto ${card.color}`} />
                     <p className="text-xs text-gray-500 mt-1">{card.label}</p>
-                    <p className={`text-lg font-bold ${card.color}`}>${card.value.toFixed(2)}</p>
+                    <p className={`text-lg font-bold ${card.color}`}>{formatCurrency(card.value)}</p>
                   </div>
                 ))}
               </div>
@@ -136,7 +138,7 @@ export default function GuestFolio() {
                           <td className="table-cell text-sm">{r.checkIn}</td>
                           <td className="table-cell text-sm">{r.checkOut}</td>
                           <td className="table-cell">{r.nights}</td>
-                          <td className="table-cell text-right font-medium">${r.total.toFixed(2)}</td>
+                          <td className="table-cell text-right font-medium">{formatCurrency(r.total)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -163,7 +165,7 @@ export default function GuestFolio() {
                           <td className="table-cell font-medium">{o.orderNumber}</td>
                           <td className="table-cell text-sm">{new Date(o.date).toLocaleDateString()}</td>
                           <td className="table-cell text-sm">{(o.items || []).length} items</td>
-                          <td className="table-cell text-right font-medium">${o.total.toFixed(2)}</td>
+                          <td className="table-cell text-right font-medium">{formatCurrency(o.total)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -175,16 +177,16 @@ export default function GuestFolio() {
               <div className="card bg-gray-50 dark:bg-gray-800/50">
                 <div className="flex justify-between items-center text-lg font-bold">
                   <span>{t('folio.totalCharges')}</span>
-                  <span>${folio.summary.totalCharges.toFixed(2)}</span>
+                  <span>{formatCurrency(folio.summary.totalCharges)}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm text-gray-500 mt-1">
                   <span>{t('folio.totalPaid')}</span>
-                  <span className="text-green-600">-${folio.summary.totalPaid.toFixed(2)}</span>
+                  <span className="text-green-600">-{formatCurrency(folio.summary.totalPaid)}</span>
                 </div>
                 <div className="flex justify-between items-center text-lg font-bold mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
                   <span>{t('folio.balance')}</span>
                   <span className={folio.summary.balance > 0 ? 'text-red-600' : 'text-green-600'}>
-                    ${folio.summary.balance.toFixed(2)}
+                    {formatCurrency(folio.summary.balance)}
                   </span>
                 </div>
               </div>

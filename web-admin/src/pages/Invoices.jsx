@@ -10,8 +10,10 @@ import { useConfirm } from '../components/ConfirmDialog';
 import { useSubmitting } from '../hooks/useHelpers';
 import { exportCSV, printTable, printInvoice } from '../utils/exportData';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 export default function Invoices() {
+  const { formatCurrency } = useCurrency();
   const invoiceCSVColumns = [
     { key: 'invoiceNumber', label: 'Invoice #' },
     { key: (r) => r.guest ? `${r.guest.firstName} ${r.guest.lastName}` : '', label: 'Guest' },
@@ -201,7 +203,7 @@ export default function Invoices() {
                     </td>
                     <td className="table-cell text-gray-600">{inv.guest ? `${inv.guest.firstName} ${inv.guest.lastName}` : '—'}</td>
                     <td className="table-cell text-gray-600">{(inv.items || []).length} items</td>
-                    <td className="table-cell font-bold text-gray-900">${Number(inv.total).toFixed(2)}</td>
+                    <td className="table-cell font-bold text-gray-900">{formatCurrency(inv.total)}</td>
                     <td className="table-cell"><StatusBadge status={inv.status} /></td>
                     <td className="table-cell text-gray-500">{new Date(inv.createdAt).toLocaleDateString()}</td>
                     <td className="table-cell">
@@ -254,7 +256,7 @@ export default function Invoices() {
                   <input aria-label={`Line item ${idx + 1} description`} placeholder="Description" value={item.description} onChange={e => updateLine(idx, 'description', e.target.value)} className="input-field flex-1" required />
                   <input aria-label={`Line item ${idx + 1} quantity`} type="number" placeholder="Qty" value={item.quantity} onChange={e => updateLine(idx, 'quantity', e.target.value)} className="input-field w-20" min="1" required />
                   <input aria-label={`Line item ${idx + 1} unit price`} type="number" step="0.01" placeholder="Price" value={item.unitPrice} onChange={e => updateLine(idx, 'unitPrice', e.target.value)} className="input-field w-28" min="0" required />
-                  <span className="w-24 text-right text-sm font-medium">${((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)).toFixed(2)}</span>
+                  <span className="w-24 text-right text-sm font-medium">{formatCurrency((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0))}</span>
                   {invoiceItems.length > 1 && <button type="button" onClick={() => removeLine(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded" aria-label={`Remove line item ${idx + 1}`}>×</button>}
                 </div>
               ))}
@@ -263,9 +265,9 @@ export default function Invoices() {
           </div>
 
           <div className="bg-gray-50 p-3 rounded-lg space-y-1 text-sm">
-            <div className="flex justify-between"><span>Subtotal</span><span>${itemsTotal.toFixed(2)}</span></div>
-            <div className="flex justify-between"><span>Tax (10%)</span><span>${tax.toFixed(2)}</span></div>
-            <div className="flex justify-between font-bold text-base border-t pt-1"><span>Total</span><span>${total.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(itemsTotal)}</span></div>
+            <div className="flex justify-between"><span>Tax (10%)</span><span>{formatCurrency(tax)}</span></div>
+            <div className="flex justify-between font-bold text-base border-t pt-1"><span>Total</span><span>{formatCurrency(total)}</span></div>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -280,7 +282,7 @@ export default function Invoices() {
         <div className="space-y-4">
           <div className="text-center">
             <p className="text-sm text-gray-500">Invoice {selectedInvoice?.invoiceNumber}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">${Number(selectedInvoice?.total || 0).toFixed(2)}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{formatCurrency(selectedInvoice?.total || 0)}</p>
           </div>
           <div>
             <label htmlFor="inv-paymethod" className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>

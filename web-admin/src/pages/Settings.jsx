@@ -4,6 +4,7 @@ import { useBranding, DEFAULT_BRANDING } from '../context/BrandingContext';
 import { Crown, Check, Building2, Monitor, Smartphone, Keyboard, Wifi, HardDrive, Printer, Bell, Edit2, Lock, Eye, EyeOff, AlertTriangle, ArrowUp, ArrowDown, Zap, CreditCard, Palette, Download, RotateCcw, Upload, X } from 'lucide-react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 const plans = [
   {
@@ -48,6 +49,7 @@ const desktopFeatures = [
 ];
 
 export default function Settings() {
+  const { formatCurrency } = useCurrency();
   const { user, updateProfile, changePassword, changePlan, getSubscriptionInfo } = useAuth();
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phone: '' });
@@ -811,7 +813,7 @@ export default function Settings() {
                 <div className="text-center mb-4">
                   <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                   <div className="mt-2">
-                    <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
+                    <span className="text-3xl font-bold text-gray-900">{formatCurrency(plan.price)}</span>
                     {plan.price > 0 && <span className="text-gray-500 text-sm">/month</span>}
                   </div>
                   <p className="text-xs text-gray-400 mt-1">{plan.limits}</p>
@@ -869,7 +871,7 @@ export default function Settings() {
               </div>
             )}
             <p className="text-sm text-gray-500 mb-4">
-              New monthly price: <strong>${plans.find(p => p.key === confirmPlan)?.price || 0}/month</strong>
+              New monthly price: <strong>{formatCurrency(plans.find(p => p.key === confirmPlan)?.price || 0)}/month</strong>
             </p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setConfirmPlan(null)} disabled={changingPlan} className="btn-secondary">Cancel</button>

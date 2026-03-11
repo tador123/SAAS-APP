@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../providers/providers.dart';
+import '../providers/currency_provider.dart';
 import '../services/api_repository.dart';
 import '../widgets/common.dart';
 
@@ -203,7 +204,7 @@ class _InvoicesScreenState extends ConsumerState<InvoicesScreen> {
 }
 
 // ── Tile ──────────────────────────────────────────────────────────
-class _InvoiceTile extends StatelessWidget {
+class _InvoiceTile extends ConsumerWidget {
   final Invoice invoice;
   final Color statusColor;
   final VoidCallback onTap;
@@ -217,12 +218,13 @@ class _InvoiceTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(currencyProvider).currency;
     final guestName =
         invoice.guest != null ? invoice.guest!.fullName : 'Guest #${invoice.guestId}';
     return Semantics(
       label:
-          'Invoice ${invoice.invoiceNumber}, $guestName, \$${invoice.total}, ${invoice.status}',
+          'Invoice ${invoice.invoiceNumber}, $guestName, ${formatCurrency(invoice.total, currency)}, ${invoice.status}',
       child: Card(
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
@@ -236,7 +238,7 @@ class _InvoiceTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('\$${invoice.total}',
+              Text(formatCurrency(invoice.total, currency),
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 15)),
               const SizedBox(height: 2),
@@ -292,14 +294,14 @@ class _InvoiceLineItem {
   }
 }
 
-class _InvoiceFormSheet extends StatefulWidget {
+class _InvoiceFormSheet extends ConsumerStatefulWidget {
   final Invoice? invoice;
   const _InvoiceFormSheet({this.invoice});
   @override
-  State<_InvoiceFormSheet> createState() => _InvoiceFormSheetState();
+  ConsumerState<_InvoiceFormSheet> createState() => _InvoiceFormSheetState();
 }
 
-class _InvoiceFormSheetState extends State<_InvoiceFormSheet> {
+class _InvoiceFormSheetState extends ConsumerState<_InvoiceFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _notesCtrl;
   late String _status;
@@ -545,11 +547,11 @@ class _InvoiceFormSheetState extends State<_InvoiceFormSheet> {
                           width: 70,
                           child: TextFormField(
                             controller: item.priceCtrl,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                                 hintText: 'Price',
-                                border: OutlineInputBorder(),
+                                border: const OutlineInputBorder(),
                                 isDense: true,
-                                prefixText: '\$'),
+                                prefixText: '${ref.watch(currencyProvider).currency} '),
                             keyboardType:
                                 const TextInputType.numberWithOptions(
                                     decimal: true),
@@ -557,7 +559,7 @@ class _InvoiceFormSheetState extends State<_InvoiceFormSheet> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text('\$${item.total.toStringAsFixed(2)}',
+                        Text(formatCurrency(item.total, ref.watch(currencyProvider).currency),
                             style: const TextStyle(
                                 fontWeight: FontWeight.w500, fontSize: 12)),
                         IconButton(
@@ -579,14 +581,14 @@ class _InvoiceFormSheetState extends State<_InvoiceFormSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Subtotal'),
-                    Text('\$${_subtotal.toStringAsFixed(2)}'),
+                    Text(formatCurrency(_subtotal, ref.watch(currencyProvider).currency)),
                   ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Tax (10%)'),
-                    Text('\$${_tax.toStringAsFixed(2)}'),
+                    Text(formatCurrency(_tax, ref.watch(currencyProvider).currency)),
                   ],
                 ),
                 Row(
@@ -597,7 +599,7 @@ class _InvoiceFormSheetState extends State<_InvoiceFormSheet> {
                             .textTheme
                             .titleSmall
                             ?.copyWith(fontWeight: FontWeight.bold)),
-                    Text('\$${_total.toStringAsFixed(2)}',
+                    Text(formatCurrency(_total, ref.watch(currencyProvider).currency),
                         style: Theme.of(context)
                             .textTheme
                             .titleSmall

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/providers.dart';
+import '../providers/currency_provider.dart';
 import '../services/auth_service.dart';
 import '../main.dart' show localeNotifier, themeModeNotifier;
 
@@ -128,7 +129,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
             const SizedBox(height: 8),
             Text(
-              'New price: \$${_planPrices[newPlan]}/month',
+              'New price: ${formatCurrency(_planPrices[newPlan] ?? 0, ref.watch(currencyProvider).currency)}/month',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],

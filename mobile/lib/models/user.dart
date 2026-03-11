@@ -8,6 +8,8 @@ class User {
   final String? phone;
   final bool isActive;
   final String? subscriptionPlan;
+  final String? currency;
+  final String? country;
 
   const User({
     required this.id,
@@ -19,6 +21,8 @@ class User {
     this.phone,
     this.isActive = true,
     this.subscriptionPlan,
+    this.currency,
+    this.country,
   });
 
   String get fullName => '$firstName $lastName';
@@ -33,6 +37,8 @@ class User {
         phone: json['phone']?.toString(),
         isActive: json['isActive'] != false,
         subscriptionPlan: json['subscriptionPlan']?.toString(),
+        currency: json['currency']?.toString(),
+        country: json['country']?.toString(),
       );
 
   static int? _toInt(dynamic v) => v is int ? v : v is num ? v.toInt() : v is String ? int.tryParse(v) : null;

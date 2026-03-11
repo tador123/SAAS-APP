@@ -8,6 +8,7 @@ import { useSortable } from '../hooks/useSortable';
 import Pagination from '../components/Pagination';
 import { useSubmitting, useDebounce } from '../hooks/useHelpers';
 import { useFormValidation, validators, FieldError } from '../hooks/useFormValidation';
+import { useCurrency } from '../context/CurrencyContext';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { exportCSV, printTable } from '../utils/exportData';
 import toast from 'react-hot-toast';
@@ -29,6 +30,7 @@ const defaultForm = {
 };
 
 export default function Reservations() {
+  const { formatCurrency } = useCurrency();
   const [reservations, setReservations] = useState([]);
   const [guests, setGuests] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -184,7 +186,7 @@ export default function Reservations() {
                     <td className="table-cell text-gray-600">{r.checkIn}</td>
                     <td className="table-cell text-gray-600">{r.checkOut}</td>
                     <td className="table-cell text-gray-600">{r.adults}A {r.children > 0 ? `${r.children}C` : ''}</td>
-                    <td className="table-cell font-medium text-gray-900">${Number(r.totalAmount).toFixed(2)}</td>
+                    <td className="table-cell font-medium text-gray-900">{formatCurrency(Number(r.totalAmount))}</td>
                     <td className="table-cell"><StatusBadge status={r.status} /></td>
                     <td className="table-cell">
                       <div className="flex items-center gap-1">
@@ -223,7 +225,7 @@ export default function Reservations() {
               <label htmlFor="res-room" className="block text-sm font-medium text-gray-700 mb-1">Room</label>
               <select id="res-room" value={form.roomId} onChange={e => setForm({...form, roomId: e.target.value})} className="input-field" required>
                 <option value="">Select room</option>
-                {rooms.map(r => <option key={r.id} value={r.id}>{r.roomNumber} - {r.type} (${r.price}/n)</option>)}
+                {rooms.map(r => <option key={r.id} value={r.id}>{r.roomNumber} - {r.type} ({formatCurrency(r.price)}/n)</option>)}
               </select>
             </div>
             <div>
@@ -245,7 +247,7 @@ export default function Reservations() {
               <input id="res-children" type="number" value={form.children} onChange={e => setForm({...form, children: parseInt(e.target.value)})} className="input-field" min="0" />
             </div>
             <div>
-              <label htmlFor="res-amount" className="block text-sm font-medium text-gray-700 mb-1">Total Amount ($)</label>
+              <label htmlFor="res-amount" className="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
               <input id="res-amount" type="number" step="0.01" value={form.totalAmount} onChange={e => setForm({...form, totalAmount: e.target.value})} onBlur={() => validateField('totalAmount', form.totalAmount)} className={`input-field ${fieldErrors.totalAmount ? 'border-red-400' : ''}`} required />
               <FieldError error={fieldErrors.totalAmount} />
             </div>

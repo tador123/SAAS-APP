@@ -5,8 +5,10 @@ import Modal from '../components/Modal';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useSubmitting } from '../hooks/useHelpers';
 import toast from 'react-hot-toast';
+import { useCurrency } from '../context/CurrencyContext';
 
 export default function Restaurant() {
+  const { formatCurrency, currency } = useCurrency();
   const [categories, setCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [tables, setTables] = useState([]);
@@ -146,7 +148,7 @@ export default function Restaurant() {
                       <p className="text-xs text-gray-400">{item.category?.name}</p>
                     </div>
                   </div>
-                  <span className="text-lg font-bold text-primary-600">${Number(item.price).toFixed(2)}</span>
+                  <span className="text-lg font-bold text-primary-600">{formatCurrency(item.price)}</span>
                 </div>
                 {item.description && <p className="text-sm text-gray-500 mb-2">{item.description}</p>}
                 <div className="flex items-center gap-2 mb-3">
@@ -231,7 +233,7 @@ export default function Restaurant() {
                   <select id="mi-category" value={form.categoryId || ''} onChange={e => setForm({...form, categoryId: parseInt(e.target.value)})} className="input-field" required>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select></div>
-                <div><label htmlFor="mi-price" className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                <div><label htmlFor="mi-price" className="block text-sm font-medium text-gray-700 mb-1">Price ({currency})</label>
                   <input id="mi-price" type="number" step="0.01" value={form.price || ''} onChange={e => setForm({...form, price: e.target.value})} className="input-field" required /></div>
                 <div><label htmlFor="mi-preptime" className="block text-sm font-medium text-gray-700 mb-1">Prep Time (min)</label>
                   <input id="mi-preptime" type="number" value={form.preparationTime || ''} onChange={e => setForm({...form, preparationTime: parseInt(e.target.value)})} className="input-field" /></div>

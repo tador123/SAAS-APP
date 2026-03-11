@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/restaurant.dart';
 import '../services/api_repository.dart';
+import '../providers/currency_provider.dart';
 import '../widgets/common.dart';
 
 class RestaurantScreen extends ConsumerStatefulWidget {
@@ -109,7 +110,7 @@ class _RestaurantScreenState extends ConsumerState<RestaurantScreen>
         itemBuilder: (context, i) {
           final item = _menuItems[i];
           return Semantics(
-            label: '${item.name}, \$${item.price}',
+            label: '${item.name}, ${formatCurrency(item.price, ref.watch(currencyProvider).currency)}',
             child: Card(
               child: ListTile(
                 leading: CircleAvatar(
@@ -121,7 +122,7 @@ class _RestaurantScreenState extends ConsumerState<RestaurantScreen>
                 ),
                 title: Text(item.name),
                 subtitle: Text(item.category?.name ?? 'Uncategorized'),
-                trailing: Text('\$${item.price}',
+                trailing: Text(formatCurrency(item.price, ref.watch(currencyProvider).currency),
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16)),
                 onTap: () => _showMenuItemForm(item: item),
@@ -379,15 +380,15 @@ class _RestaurantScreenState extends ConsumerState<RestaurantScreen>
 }
 
 // ── Menu Item Form Sheet ───────────────────────────────────────────
-class _MenuItemFormSheet extends StatefulWidget {
+class _MenuItemFormSheet extends ConsumerStatefulWidget {
   final MenuItem? item;
   final List<MenuCategory> categories;
   const _MenuItemFormSheet({this.item, required this.categories});
   @override
-  State<_MenuItemFormSheet> createState() => _MenuItemFormSheetState();
+  ConsumerState<_MenuItemFormSheet> createState() => _MenuItemFormSheetState();
 }
 
-class _MenuItemFormSheetState extends State<_MenuItemFormSheet> {
+class _MenuItemFormSheetState extends ConsumerState<_MenuItemFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _descCtrl;
@@ -452,10 +453,10 @@ class _MenuItemFormSheetState extends State<_MenuItemFormSheet> {
                 Expanded(
                   child: TextFormField(
                     controller: _priceCtrl,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                         labelText: 'Price',
-                        border: OutlineInputBorder(),
-                        prefixText: '\$ '),
+                        border: const OutlineInputBorder(),
+                        prefixText: '${ref.watch(currencyProvider).currency} '),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (v) =>
                         v == null || v.isEmpty ? 'Required' : null,

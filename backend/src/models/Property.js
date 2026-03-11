@@ -34,6 +34,11 @@ const Property = sequelize.define('Property', {
     type: DataTypes.STRING(3),
     defaultValue: 'USD',
   },
+  country: {
+    type: DataTypes.STRING(2),
+    allowNull: true,
+    comment: 'ISO 3166-1 alpha-2 country code',
+  },
   settings: {
     type: DataTypes.JSON,
     defaultValue: {},

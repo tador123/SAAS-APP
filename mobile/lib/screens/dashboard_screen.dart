@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/currency_provider.dart';
 import '../services/offline_aware_repository.dart';
 import '../widgets/common.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic> _stats = {};
   bool _loading = true;
   String? _error;
@@ -60,13 +62,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildStatsGrid() {
+    final currency = ref.watch(currencyProvider).currency;
     final cards = [
       _StatCard('Total Rooms', '${_stats['totalRooms'] ?? 0}', Icons.bed, Colors.blue),
       _StatCard('Occupied', '${_stats['occupiedRooms'] ?? 0}', Icons.meeting_room, Colors.red),
       _StatCard('Check-ins Today', '${_stats['todayCheckIns'] ?? 0}', Icons.login, Colors.green),
       _StatCard('Active Orders', '${_stats['activeOrders'] ?? 0}', Icons.receipt_long, Colors.orange),
       _StatCard('Occupancy', '${_stats['occupancyRate'] ?? 0}%', Icons.trending_up, Colors.purple),
-      _StatCard('Revenue', '\$${_stats['monthlyRevenue'] ?? 0}', Icons.attach_money, Colors.teal),
+      _StatCard('Revenue', formatCurrency(_stats['monthlyRevenue'] ?? 0, currency), Icons.attach_money, Colors.teal),
     ];
 
     return GridView.count(

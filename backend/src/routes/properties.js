@@ -5,6 +5,26 @@ const { authenticate, authorize } = require('../middleware/auth');
 
 // ─── Branding endpoints (property-scoped) ─────────────────────────
 
+// GET /api/properties/current — Get current property info (currency, country, etc.)
+router.get('/current', authenticate, async (req, res, next) => {
+  try {
+    const property = await Property.findByPk(req.user.propertyId);
+    if (!property) return res.status(404).json({ error: 'Property not found.' });
+
+    res.json({
+      id: property.id,
+      name: property.name,
+      slug: property.slug,
+      currency: property.currency || 'USD',
+      country: property.country || null,
+      timezone: property.timezone || 'UTC',
+      subscriptionPlan: property.subscriptionPlan,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/properties/branding — Get branding for the current user's property
 router.get('/branding', authenticate, async (req, res, next) => {
   try {

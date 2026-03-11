@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useCurrency } from '../context/CurrencyContext';
 import {
   BedDouble,
   Users,
@@ -16,6 +17,7 @@ import StatusBadge from '../components/StatusBadge';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 export default function Dashboard() {
+  const { formatCurrency } = useCurrency();
   const [stats, setStats] = useState(null);
   const [recentReservations, setRecentReservations] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
@@ -101,11 +103,11 @@ export default function Dashboard() {
     },
     {
       label: 'Monthly Revenue',
-      value: `$${(stats?.monthlyRevenue || 0).toLocaleString()}`,
+      value: formatCurrency(stats?.monthlyRevenue || 0),
       icon: DollarSign,
       color: 'bg-purple-500',
       bgColor: 'bg-purple-50',
-      change: `$${(stats?.dailyRevenue || 0).toLocaleString()} today`,
+      change: `${formatCurrency(stats?.dailyRevenue || 0)} today`,
       up: true,
     },
   ];
@@ -239,7 +241,7 @@ export default function Dashboard() {
                     <tr key={o.id} className="hover:bg-gray-50">
                       <td className="table-cell font-medium text-gray-900">{o.orderNumber}</td>
                       <td className="table-cell text-gray-500 capitalize">{o.orderType?.replace('_', ' ')}</td>
-                      <td className="table-cell text-gray-900">${Number(o.total).toFixed(2)}</td>
+                      <td className="table-cell text-gray-900">{formatCurrency(o.total)}</td>
                       <td className="table-cell">
                         <StatusBadge status={o.status} />
                       </td>

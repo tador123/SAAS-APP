@@ -58,7 +58,6 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'pending': return Colors.orange;
       case 'confirmed': return Colors.blue;
       case 'preparing': return Colors.deepPurple;
       case 'ready': return Colors.green;
@@ -69,7 +68,6 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
   Future<void> _advanceOrder(Order order) async {
     String? next;
     switch (order.status) {
-      case 'pending': next = 'confirmed'; break;
       case 'confirmed': next = 'preparing'; break;
       case 'preparing': next = 'ready'; break;
     }
@@ -88,7 +86,7 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final columns = {
-      'New': _orders.where((o) => o.status == 'pending' || o.status == 'confirmed').toList(),
+      'New': _orders.where((o) => o.status == 'confirmed').toList(),
       'Preparing': _orders.where((o) => o.status == 'preparing').toList(),
       'Ready': _orders.where((o) => o.status == 'ready').toList(),
     };

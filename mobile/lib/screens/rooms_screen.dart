@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/room.dart';
 import '../providers/providers.dart';
+import '../providers/currency_provider.dart';
 import '../widgets/common.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
@@ -166,7 +167,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   }
 }
 
-class _RoomCard extends StatelessWidget {
+class _RoomCard extends ConsumerWidget {
   final Room room;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -207,9 +208,10 @@ class _RoomCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(currencyProvider).currency;
     return Semantics(
-      label: 'Room ${room.roomNumber}, ${room.type}, ${room.status}, \$${room.price} per night',
+      label: 'Room ${room.roomNumber}, ${room.type}, ${room.status}, ${formatCurrency(room.price, currency)} per night',
       child: Card(
         child: InkWell(
           onTap: () => context.push('/rooms/detail', extra: room),
@@ -250,7 +252,7 @@ class _RoomCard extends StatelessWidget {
                     Text(room.type.toUpperCase(),
                         style:
                             const TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('\$${room.price}/night',
+                    Text('${formatCurrency(room.price, currency)}/night',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
@@ -266,15 +268,15 @@ class _RoomCard extends StatelessWidget {
   }
 }
 
-class _RoomFormSheet extends StatefulWidget {
+class _RoomFormSheet extends ConsumerStatefulWidget {
   final Room? room;
   const _RoomFormSheet({this.room});
 
   @override
-  State<_RoomFormSheet> createState() => _RoomFormSheetState();
+  ConsumerState<_RoomFormSheet> createState() => _RoomFormSheetState();
 }
 
-class _RoomFormSheetState extends State<_RoomFormSheet> {
+class _RoomFormSheetState extends ConsumerState<_RoomFormSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _numberCtrl;
   late final TextEditingController _floorCtrl;
@@ -337,7 +339,7 @@ class _RoomFormSheetState extends State<_RoomFormSheet> {
                 Expanded(
                   child: TextFormField(
                     controller: _priceCtrl,
-                    decoration: const InputDecoration(labelText: 'Price/Night', border: OutlineInputBorder(), prefixText: '\$ '),
+                    decoration: InputDecoration(labelText: 'Price/Night', border: const OutlineInputBorder(), prefixText: '${ref.watch(currencyProvider).currency} '),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                   ),

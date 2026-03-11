@@ -59,6 +59,12 @@ class ApiRepository {
     );
   }
 
+  // ─── Property ──────────────────────────────────────────────
+  static Future<Map<String, dynamic>> getPropertyCurrent() async {
+    final res = await _dio.get('/properties/current');
+    return res.data as Map<String, dynamic>;
+  }
+
   // ─── Dashboard ────────────────────────────────────────────
   static Future<Map<String, dynamic>> getDashboardStats() async {
     final res = await _dio.get('/dashboard/stats');

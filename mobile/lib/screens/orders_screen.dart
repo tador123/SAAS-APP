@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../providers/providers.dart';
 import '../services/api_repository.dart';
 import '../widgets/common.dart';
+import '../providers/currency_provider.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
@@ -195,7 +196,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
 }
 
 // ─── Order Tile ──────────────────────────────────────────────
-class _OrderTile extends StatelessWidget {
+class _OrderTile extends ConsumerWidget {
   final Order order;
   final Color statusColor;
   final VoidCallback onEdit;
@@ -258,10 +259,11 @@ class _OrderTile extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(currencyProvider).currency;
     return Semantics(
       label:
-          'Order ${order.orderNumber}, ${order.items.length} items, \$${order.total.toStringAsFixed(2)}, ${order.status}',
+          'Order ${order.orderNumber}, ${order.items.length} items, ${formatCurrency(order.total, currency)}, ${order.status}',
       child: Card(
         margin: const EdgeInsets.only(bottom: 8),
         child: ListTile(
@@ -275,7 +277,7 @@ class _OrderTile extends StatelessWidget {
           trailing: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('\$${order.total.toStringAsFixed(2)}',
+              Text(formatCurrency(order.total, currency),
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 2),
               Container(
@@ -321,14 +323,14 @@ class _CartItem {
 }
 
 // ─── Full-Screen Order Form ─────────────────────────────────
-class _OrderFormPage extends StatefulWidget {
+class _OrderFormPage extends ConsumerStatefulWidget {
   final Order? order;
   const _OrderFormPage({this.order});
   @override
-  State<_OrderFormPage> createState() => _OrderFormPageState();
+  ConsumerState<_OrderFormPage> createState() => _OrderFormPageState();
 }
 
-class _OrderFormPageState extends State<_OrderFormPage> {
+class _OrderFormPageState extends ConsumerState<_OrderFormPage> {
   final _formKey = GlobalKey<FormState>();
   late String _orderType;
   late String _status;
@@ -637,7 +639,7 @@ class _OrderFormPageState extends State<_OrderFormPage> {
                                                             FontWeight
                                                                 .w500)),
                                                 Text(
-                                                    '\$${item.menuItem.price.toStringAsFixed(2)} each',
+                                                    '${formatCurrency(item.menuItem.price, ref.watch(currencyProvider).currency)} each',
                                                     style: const TextStyle(
                                                         fontSize: 12,
                                                         color:
@@ -677,7 +679,7 @@ class _OrderFormPageState extends State<_OrderFormPage> {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                              '\$${item.lineTotal.toStringAsFixed(2)}',
+                                              formatCurrency(item.lineTotal, ref.watch(currencyProvider).currency),
                                               style: const TextStyle(
                                                   fontWeight:
                                                       FontWeight.bold)),
@@ -726,7 +728,7 @@ class _OrderFormPageState extends State<_OrderFormPage> {
                               children: [
                                 const Text('Subtotal'),
                                 Text(
-                                    '\$${_subtotal.toStringAsFixed(2)}'),
+                                    formatCurrency(_subtotal, ref.watch(currencyProvider).currency)),
                               ],
                             ),
                             Row(
@@ -734,7 +736,7 @@ class _OrderFormPageState extends State<_OrderFormPage> {
                                   MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Tax (10%)'),
-                                Text('\$${_tax.toStringAsFixed(2)}'),
+                                Text(formatCurrency(_tax, ref.watch(currencyProvider).currency)),
                               ],
                             ),
                             const Divider(),
@@ -749,7 +751,7 @@ class _OrderFormPageState extends State<_OrderFormPage> {
                                         ?.copyWith(
                                             fontWeight: FontWeight.bold)),
                                 Text(
-                                    '\$${_total.toStringAsFixed(2)}',
+                                    formatCurrency(_total, ref.watch(currencyProvider).currency),
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
@@ -920,7 +922,7 @@ class _OrderFormPageState extends State<_OrderFormPage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
-                                        '\$${item.price.toStringAsFixed(2)}',
+                                        formatCurrency(item.price, ref.watch(currencyProvider).currency),
                                         style: const TextStyle(
                                             fontWeight:
                                                 FontWeight.bold)),

@@ -52,6 +52,7 @@ router.post('/signup', [
   body('phone').optional().trim(),
   body('currency').optional().isLength({ min: 3, max: 3 }).withMessage('Currency must be a 3-letter code'),
   body('timezone').optional().trim(),
+  body('country').optional().isLength({ min: 2, max: 2 }).withMessage('Country must be a 2-letter ISO code'),
 ], async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
@@ -61,7 +62,7 @@ router.post('/signup', [
       return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
 
-    const { propertyName, firstName, lastName, email, password, phone, currency, timezone } = req.body;
+    const { propertyName, firstName, lastName, email, password, phone, currency, timezone, country } = req.body;
 
     // Check if email already exists
     const existingUser = await User.findOne({ where: { email }, transaction: t });
@@ -85,6 +86,7 @@ router.post('/signup', [
       email,
       phone,
       currency: currency || 'USD',
+      country: country || null,
       timezone: timezone || 'UTC',
       subscriptionPlan: 'free',
     }, { transaction: t });
@@ -134,6 +136,8 @@ router.post('/signup', [
         id: property.id,
         name: property.name,
         slug: property.slug,
+        currency: property.currency,
+        country: property.country,
         subscriptionPlan: property.subscriptionPlan,
       },
     });
@@ -226,6 +230,11 @@ router.post('/login', [
 
     await user.update({ lastLogin: new Date() });
 
+    // Fetch property for currency info
+    const property = await Property.findByPk(user.propertyId, {
+      attributes: ['id', 'currency', 'country'],
+    });
+
     // Short-lived access token (1 hour default)
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 
@@ -255,6 +264,8 @@ router.post('/login', [
         role: user.role,
         propertyId: user.propertyId,
         subscriptionPlan: user.subscriptionPlan,
+        currency: property?.currency || 'USD',
+        country: property?.country || null,
       },
     });
   } catch (error) {

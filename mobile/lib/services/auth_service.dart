@@ -124,6 +124,8 @@ class AuthService {
     required String email,
     required String password,
     String? phone,
+    String? country,
+    String? currency,
   }) async {
     final response = await _dio.post('/auth/signup', data: {
       'propertyName': propertyName,
@@ -132,6 +134,8 @@ class AuthService {
       'email': email,
       'password': password,
       if (phone != null && phone.isNotEmpty) 'phone': phone,
+      if (country != null && country.isNotEmpty) 'country': country,
+      if (currency != null && currency.isNotEmpty) 'currency': currency,
     });
 
     final data = response.data as Map<String, dynamic>;
