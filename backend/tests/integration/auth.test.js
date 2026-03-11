@@ -109,8 +109,8 @@ describe('GET /api/auth/me', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('email', 'admin@test.com');
-    expect(res.body).toHaveProperty('role', 'admin');
+    expect(res.body.user).toHaveProperty('email', 'admin@test.com');
+    expect(res.body.user).toHaveProperty('role', 'admin');
   });
 
   it('should reject requests without token', async () => {
@@ -151,7 +151,7 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.user).toHaveProperty('email', 'newstaff@test.com');
-    expect(res.body.user).toHaveProperty('role', 'waiter');
+    expect(res.body.user).toHaveProperty('role', 'staff');
   });
 
   it('should reject weak passwords', async () => {

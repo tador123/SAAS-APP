@@ -68,7 +68,7 @@ beforeAll(async () => {
       roomNumber: '201',
       type: 'double',
       floor: 2,
-      pricePerNight: 150,
+      price: 150,
       status: 'available',
     });
   roomId = roomRes.body.id;
@@ -95,13 +95,14 @@ describe('Reservations CRUD', () => {
         roomId,
         checkIn: tomorrow.toISOString().slice(0, 10),
         checkOut: dayAfter.toISOString().slice(0, 10),
+        totalAmount: 300,
         adults: 2,
         children: 0,
         specialRequests: 'Late check-in',
       });
 
     expect(res.status).toBe(201);
-    expect(res.body.status).toBe('confirmed');
+    expect(res.body.status).toBe('pending');
     reservationId = res.body.id;
   });
 
@@ -131,6 +132,7 @@ describe('Reservations CRUD', () => {
       .send({
         adults: 3,
         specialRequests: 'Extra pillow',
+        status: 'confirmed',
       });
 
     expect(res.status).toBe(200);
@@ -140,7 +142,7 @@ describe('Reservations CRUD', () => {
     const res = await request(app)
       .put(`/api/reservations/${reservationId}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ status: 'checked-in' });
+      .send({ status: 'checked_in' });
 
     expect(res.status).toBe(200);
   });
@@ -149,7 +151,7 @@ describe('Reservations CRUD', () => {
     const res = await request(app)
       .put(`/api/reservations/${reservationId}`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ status: 'checked-out' });
+      .send({ status: 'checked_out' });
 
     expect(res.status).toBe(200);
   });
@@ -163,6 +165,7 @@ describe('Reservations CRUD', () => {
         roomId,
         checkIn: '2026-06-01',
         checkOut: '2026-06-03',
+        totalAmount: 200,
         adults: 1,
       });
 

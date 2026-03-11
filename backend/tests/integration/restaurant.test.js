@@ -152,7 +152,7 @@ describe('Restaurant Tables', () => {
       .send({
         tableNumber: 'A1',
         capacity: 6,
-        location: 'patio',
+        location: 'indoor',
         status: 'available',
       });
 

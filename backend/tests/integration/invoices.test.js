@@ -68,7 +68,7 @@ beforeAll(async () => {
       roomNumber: '301',
       type: 'suite',
       floor: 3,
-      pricePerNight: 300,
+      price: 300,
       status: 'available',
     });
   roomId = roomRes.body.id;
@@ -81,6 +81,7 @@ beforeAll(async () => {
       roomId,
       checkIn: '2026-07-01',
       checkOut: '2026-07-03',
+      totalAmount: 600,
       adults: 2,
     });
   reservationId = resRes.body.id;
