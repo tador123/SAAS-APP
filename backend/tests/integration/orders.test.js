@@ -96,7 +96,7 @@ describe('Orders CRUD', () => {
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('pending');
     // Server-side total calculation: 2 * 25.50 = 51.00
-    expect(parseFloat(res.body.totalAmount)).toBeCloseTo(51.0, 1);
+    expect(parseFloat(res.body.total)).toBeCloseTo(51.0, 1);
     orderId = res.body.id;
   });
 
@@ -116,6 +116,16 @@ describe('Orders CRUD', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(orderId);
+  });
+
+  it('PATCH /api/orders/:id/status - should transition to confirmed', async () => {
+    const res = await request(app)
+      .patch(`/api/orders/${orderId}/status`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'confirmed' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('confirmed');
   });
 
   it('PATCH /api/orders/:id/status - should transition to preparing', async () => {
@@ -138,14 +148,14 @@ describe('Orders CRUD', () => {
     expect(res.body.status).toBe('ready');
   });
 
-  it('PATCH /api/orders/:id/status - should transition to delivered', async () => {
+  it('PATCH /api/orders/:id/status - should transition to served', async () => {
     const res = await request(app)
       .patch(`/api/orders/${orderId}/status`)
       .set('Authorization', `Bearer ${token}`)
-      .send({ status: 'delivered' });
+      .send({ status: 'served' });
 
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('delivered');
+    expect(res.body.status).toBe('served');
   });
 
   it('DELETE /api/orders/:id - should soft-delete', async () => {

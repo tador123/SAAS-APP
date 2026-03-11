@@ -165,21 +165,22 @@ describe('Invoices CRUD', () => {
     expect(voidRes.body.status).toBe('void');
   });
 
-  it('DELETE /api/invoices/:id - should soft-delete', async () => {
+  it('PATCH /api/invoices/:id/void - should void a new invoice', async () => {
     const newInv = await request(app)
       .post('/api/invoices')
       .set('Authorization', `Bearer ${token}`)
       .send({
         guestId,
-        items: [{ description: 'To delete', unitPrice: 10, quantity: 1 }],
+        items: [{ description: 'To void', unitPrice: 10, quantity: 1 }],
         taxRate: 0,
         discount: 0,
       });
 
     const res = await request(app)
-      .delete(`/api/invoices/${newInv.body.id}`)
+      .patch(`/api/invoices/${newInv.body.id}/void`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
+    expect(res.body.status).toBe('void');
   });
 });
