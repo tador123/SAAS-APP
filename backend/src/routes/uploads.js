@@ -11,6 +11,7 @@ const ALLOWED_TYPES = {
   room: { dir: 'rooms', maxSize: 5 * 1024 * 1024 },       // 5 MB
   menu: { dir: 'menu', maxSize: 5 * 1024 * 1024 },        // 5 MB
   profile: { dir: 'profiles', maxSize: 2 * 1024 * 1024 },  // 2 MB
+  branding: { dir: 'branding', maxSize: 2 * 1024 * 1024 }, // 2 MB — logos, favicons
 };
 const ALLOWED_MIMETYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 

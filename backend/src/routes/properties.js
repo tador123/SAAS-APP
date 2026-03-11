@@ -86,31 +86,40 @@ router.put('/branding', authenticate, authorize('admin', 'manager'), [
 
 // GET /api/properties/desktop-download — Get download links for desktop app
 router.get('/desktop-download', authenticate, async (req, res) => {
-  // Return download links for all platforms
-  const baseUrl = 'https://github.com/tador123/SAAS-APP/releases/latest/download';
+  const repoUrl = 'https://github.com/tador123/SAAS-APP/releases';
+  const latestUrl = `${repoUrl}/latest`;
+
   res.json({
     platforms: {
       windows: {
         name: 'Windows',
-        ext: '.msi',
-        url: `${baseUrl}/HotelSaaS-Desktop_1.0.0_x64_en-US.msi`,
+        ext: '.msi / .exe',
+        url: latestUrl,
+        directNote: 'Download the .msi or .exe file from the latest release',
         size: '~25 MB',
+        icon: 'windows',
       },
       mac: {
         name: 'macOS',
         ext: '.dmg',
-        url: `${baseUrl}/HotelSaaS-Desktop_1.0.0_x64.dmg`,
+        url: latestUrl,
+        directNote: 'Download the .dmg file from the latest release',
         size: '~30 MB',
+        icon: 'apple',
       },
       linux: {
         name: 'Linux',
-        ext: '.AppImage',
-        url: `${baseUrl}/HotelSaaS-Desktop_1.0.0_amd64.AppImage`,
+        ext: '.deb / .AppImage',
+        url: latestUrl,
+        directNote: 'Download the .deb or .AppImage from the latest release',
         size: '~25 MB',
+        icon: 'linux',
       },
     },
+    releasesUrl: latestUrl,
     version: '1.0.0',
-    releaseNotes: 'Initial release with offline mode, system tray, and native printing support.',
+    releaseNotes: 'Offline mode, system tray, and native printing support.',
+    buildInstructions: 'To trigger a desktop build, go to GitHub Actions → "Build Desktop App" → Run workflow.',
   });
 });
 

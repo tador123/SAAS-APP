@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useBranding, DEFAULT_BRANDING } from '../context/BrandingContext';
-import { Crown, Check, Building2, Monitor, Smartphone, Keyboard, Wifi, HardDrive, Printer, Bell, Edit2, Lock, Eye, EyeOff, AlertTriangle, ArrowUp, ArrowDown, Zap, CreditCard, Palette, Download, RotateCcw } from 'lucide-react';
+import { Crown, Check, Building2, Monitor, Smartphone, Keyboard, Wifi, HardDrive, Printer, Bell, Edit2, Lock, Eye, EyeOff, AlertTriangle, ArrowUp, ArrowDown, Zap, CreditCard, Palette, Download, RotateCcw, Upload, X } from 'lucide-react';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
@@ -126,6 +126,28 @@ export default function Settings() {
       toast.error('Failed to reset branding');
     } finally {
       setSavingBranding(false);
+    }
+  };
+
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
+  const handleImageUpload = async (file, field) => {
+    const setUploading = field === 'logoUrl' ? setUploadingLogo : setUploadingFavicon;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('type', 'branding');
+      const { data } = await api.post('/uploads/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setBrandingForm(prev => ({ ...prev, [field]: data.url }));
+      toast.success(`${field === 'logoUrl' ? 'Logo' : 'Favicon'} uploaded!`);
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Upload failed');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -409,18 +431,60 @@ export default function Settings() {
                 <p className="text-xs text-gray-400 mt-1">Shown below the brand name in sidebar</p>
               </div>
               <div>
-                <label htmlFor="brand-logo" className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
-                <input id="brand-logo" value={brandingForm.logoUrl}
-                  onChange={e => setBrandingForm({ ...brandingForm, logoUrl: e.target.value })}
-                  className="input-field" placeholder="https://example.com/logo.png" type="url" />
-                <p className="text-xs text-gray-400 mt-1">Square image recommended (40×40px min)</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Logo (PNG, JPG, WebP)</label>
+                <div className="flex items-center gap-3">
+                  {brandingForm.logoUrl ? (
+                    <div className="relative">
+                      <img src={brandingForm.logoUrl} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                      <button type="button" onClick={() => setBrandingForm({ ...brandingForm, logoUrl: '' })}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                      <Building2 size={24} />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors text-sm font-medium
+                      ${uploadingLogo ? 'bg-gray-100 text-gray-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                      <Upload size={16} />
+                      {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={uploadingLogo}
+                        onChange={e => { if (e.target.files[0]) handleImageUpload(e.target.files[0], 'logoUrl'); e.target.value = ''; }} />
+                    </label>
+                    <p className="text-xs text-gray-400 mt-1">Square image, max 2 MB</p>
+                  </div>
+                </div>
               </div>
               <div>
-                <label htmlFor="brand-favicon" className="block text-sm font-medium text-gray-700 mb-1">Favicon URL</label>
-                <input id="brand-favicon" value={brandingForm.faviconUrl}
-                  onChange={e => setBrandingForm({ ...brandingForm, faviconUrl: e.target.value })}
-                  className="input-field" placeholder="https://example.com/favicon.ico" type="url" />
-                <p className="text-xs text-gray-400 mt-1">Browser tab icon (16×16 or 32×32px)</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Favicon (PNG, ICO)</label>
+                <div className="flex items-center gap-3">
+                  {brandingForm.faviconUrl ? (
+                    <div className="relative">
+                      <img src={brandingForm.faviconUrl} alt="Favicon" className="w-10 h-10 rounded border border-gray-200" />
+                      <button type="button" onClick={() => setBrandingForm({ ...brandingForm, faviconUrl: '' })}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                      <Building2 size={14} />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors text-sm font-medium
+                      ${uploadingFavicon ? 'bg-gray-100 text-gray-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                      <Upload size={16} />
+                      {uploadingFavicon ? 'Uploading...' : 'Upload Favicon'}
+                      <input type="file" accept="image/png,image/x-icon,image/jpeg,image/webp" className="hidden" disabled={uploadingFavicon}
+                        onChange={e => { if (e.target.files[0]) handleImageUpload(e.target.files[0], 'faviconUrl'); e.target.value = ''; }} />
+                    </label>
+                    <p className="text-xs text-gray-400 mt-1">16×16 or 32×32px, max 2 MB</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -533,7 +597,13 @@ export default function Settings() {
             <a key={platform.name} href={platform.url} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-primary-300 transition-colors group">
               <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200 transition-colors">
-                <Monitor size={24} className="text-primary-600" />
+                {platform.name === 'Windows' ? (
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 text-primary-600 fill-current"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+                ) : platform.name === 'macOS' ? (
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 text-primary-600 fill-current"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11Z"/></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 text-primary-600 fill-current"><path d="M12.504 0c-.155 0-.311.002-.465.014-.422.032-.794.124-1.141.263-.541.22-.964.543-1.29.952a3.09 3.09 0 00-.584 1.308 4.26 4.26 0 00-.07.924c.01.19.042.396.078.591.242 1.313.947 2.546 2.168 3.168-.222.662-.573 1.227-.981 1.723-.535.647-1.144 1.174-1.98 1.174-.414 0-.717-.102-1.034-.21-.326-.112-.691-.238-1.255-.238-.598 0-.984.13-1.326.246-.31.106-.594.21-.965.224-.8.027-1.408-.516-1.976-1.12C1.073 7.9.44 6.443.178 4.978.07 4.371.01 3.744.01 3.11 0 2.477.058 1.837.248 1.216c.18-.582.47-1.087.86-1.503a3.37 3.37 0 011.28-.899C2.84-.055 3.36-.05 3.837.005c.243.027.497.088.742.15.246.063.483.13.725.13.197 0 .4-.045.612-.102.367-.098.75-.217 1.198-.242a3.37 3.37 0 012.3.598c.227.157.439.337.63.559-.622.441-1.166 1.067-1.378 1.918-.193.773-.142 1.596.17 2.295.236.527.594.978 1.015 1.294.42.316.892.498 1.355.498.237 0 .524-.062.789-.175-.134.405-.31.797-.5 1.152-.284.529-.606.99-.948 1.382a5.61 5.61 0 01-.703.67z"/></svg>
+                )}
               </div>
               <div className="flex-1">
                 <p className="font-medium text-gray-900">{platform.name}</p>
@@ -550,7 +620,11 @@ export default function Settings() {
         </div>
         {desktopDownloads && (
           <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-            <p className="text-xs text-gray-400">Version {desktopDownloads.version} • {desktopDownloads.releaseNotes}</p>
+            <p className="text-xs text-gray-400">Version {desktopDownloads.version} &bull; {desktopDownloads.releaseNotes}</p>
+            <a href={desktopDownloads.releasesUrl} target="_blank" rel="noopener noreferrer"
+              className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+              View all releases &rarr;
+            </a>
           </div>
         )}
       </div>
