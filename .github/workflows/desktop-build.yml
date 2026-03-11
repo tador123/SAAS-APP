@@ -40,7 +40,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: web-admin/package-lock.json
+          cache-dependency-path: |
+            web-admin/package-lock.json
+            desktop/package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -71,15 +73,13 @@ jobs:
         working-directory: web-admin
         run: npm run build
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@latest
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm ci
 
       - name: Build Tauri app
         working-directory: desktop
         run: npx tauri build
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ''
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
 
       - name: Upload Windows artifacts
         if: matrix.platform.os == 'windows-latest'
