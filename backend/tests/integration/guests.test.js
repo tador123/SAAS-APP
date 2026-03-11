@@ -81,7 +81,7 @@ describe('Guests CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.guests.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
   });
 
   it('GET /api/guests?search=Jane - should search guests', async () => {
@@ -90,8 +90,8 @@ describe('Guests CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.guests.length).toBe(1);
-    expect(res.body.guests[0].firstName).toBe('Jane');
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].firstName).toBe('Jane');
   });
 
   it('GET /api/guests/:id - should get specific guest', async () => {

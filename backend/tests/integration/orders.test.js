@@ -103,7 +103,7 @@ describe('Orders CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.orders.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
   });
 
   it('GET /api/orders/:id - should get order with items', async () => {

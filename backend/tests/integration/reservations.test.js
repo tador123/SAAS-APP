@@ -111,7 +111,7 @@ describe('Reservations CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.reservations.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
   });
 
   it('GET /api/reservations/:id - should get specific reservation', async () => {

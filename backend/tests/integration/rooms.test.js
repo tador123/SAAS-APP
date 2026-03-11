@@ -83,7 +83,7 @@ describe('Rooms CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.rooms.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
     expect(res.body).toHaveProperty('pagination');
   });
 
@@ -102,7 +102,7 @@ describe('Rooms CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    res.body.rooms.forEach(room => {
+    res.body.data.forEach(room => {
       expect(room.status).toBe('available');
     });
   });

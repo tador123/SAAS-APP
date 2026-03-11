@@ -119,7 +119,7 @@ describe('Invoices CRUD', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.invoices.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
   });
 
   it('GET /api/invoices/:id - should get specific invoice', async () => {
