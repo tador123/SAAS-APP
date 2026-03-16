@@ -17,10 +17,11 @@ const seed = async () => {
     const sysAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD || 'SysAdmin@2024!';
     const existingSysAdmin = await User.findOne({ where: { role: 'system_admin' } });
     if (!existingSysAdmin) {
+      // Pass plain password — beforeCreate hook handles hashing
       await User.create({
         username: 'sysadmin',
         email: 'sysadmin@hotelware.in',
-        password: await bcrypt.hash(sysAdminPassword, 12),
+        password: sysAdminPassword,
         firstName: 'System',
         lastName: 'Administrator',
         role: 'system_admin',
