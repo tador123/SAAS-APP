@@ -22,16 +22,19 @@ import KitchenDisplay from './pages/KitchenDisplay';
 import GuestFolio from './pages/GuestFolio';
 import QROrdering from './pages/QROrdering';
 import SystemAdmin from './pages/SystemAdmin';
+import LandingPage from './pages/LandingPage';
 
 function App() {
   const { isAuthenticated, user } = useAuth();
 
   // System admin should go to system admin dashboard by default
-  const defaultRoute = user?.role === 'system_admin' ? '/system-admin' : '/';
+  const defaultRoute = user?.role === 'system_admin' ? '/system-admin' : '/dashboard';
 
   return (
     <ErrorBoundary>
       <Routes>
+        {/* Public landing page */}
+        <Route path="/" element={<LandingPage />} />
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to={defaultRoute} replace /> : <Login />}
@@ -45,7 +48,7 @@ function App() {
         {/* All authenticated users */}
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/" element={
+            <Route path="/dashboard" element={
               user?.role === 'system_admin'
                 ? <Navigate to="/system-admin" replace />
                 : <ErrorBoundary><Dashboard /></ErrorBoundary>
@@ -81,7 +84,7 @@ function App() {
             <Route path="/system-admin" element={<ErrorBoundary><SystemAdmin /></ErrorBoundary>} />
           </Route>
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </ErrorBoundary>
   );

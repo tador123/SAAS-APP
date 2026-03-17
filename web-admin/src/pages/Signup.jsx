@@ -42,7 +42,7 @@ export default function Signup() {
         toast.success('Account created! Pending admin approval.');
       } else {
         toast.success('Account created! Welcome to your dashboard.');
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       toast.error(error.response?.data?.error || 'Signup failed');

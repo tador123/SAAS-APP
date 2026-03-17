@@ -26,7 +26,7 @@ import {
 
 // Nav items with optional role restrictions
 const navItems = [
-  { to: '/', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
+  { to: '/dashboard', icon: LayoutDashboard, labelKey: 'nav.dashboard' },
   { to: '/system-admin', icon: Shield, labelKey: 'nav.systemAdmin', roles: ['system_admin'] },
   { to: '/rooms', icon: BedDouble, labelKey: 'nav.rooms', hideFor: ['system_admin'] },
   { to: '/reservations', icon: CalendarCheck, labelKey: 'nav.reservations', hideFor: ['system_admin'] },
