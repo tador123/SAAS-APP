@@ -137,7 +137,10 @@ jobs:
             npm install --omit=dev
             npm run migrate
             pm2 restart hotelsaas-api
-            echo "Backend deployed successfully"
+            cd ../web-admin
+            npm install
+            npm run build
+            echo "Backend + Web Admin deployed successfully"
 
       - name: Revoke runner SSH access
         if: always()
