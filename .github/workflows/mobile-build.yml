@@ -81,3 +81,62 @@ jobs:
           name: hotel-restaurant-app
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
+
+  deploy-apk:
+    name: Deploy APK to Server
+    needs: build-apk
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hotel-restaurant-app
+          path: ./
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get runner IP and open SSH
+        id: ip
+        run: |
+          RUNNER_IP=$(curl -s https://checkip.amazonaws.com)
+          echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
+          aws ec2 authorize-security-group-ingress \
+            --group-id sg-0e87e2be37ed02b40 \
+            --protocol tcp --port 22 \
+            --cidr "$RUNNER_IP/32" \
+            --tag-specifications 'ResourceType=security-group-rule,Tags=[{Key=Name,Value=github-actions-temp}]' || true
+
+      - name: Upload APK to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: app-release.apk
+          target: /opt/hotelsaas/downloads/
+          overwrite: true
+
+      - name: Rename APK on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mv /opt/hotelsaas/downloads/app-release.apk /opt/hotelsaas/downloads/HotelSaaS.apk
+            echo "APK deployed to /downloads/HotelSaaS.apk"
+
+      - name: Revoke runner SSH access
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id sg-0e87e2be37ed02b40 \
+            --protocol tcp --port 22 \
+            --cidr "${{ steps.ip.outputs.runner_ip }}/32" || true

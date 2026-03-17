@@ -140,7 +140,9 @@ jobs:
             cd ../web-admin
             npm install
             npm run build
-            echo "Backend + Web Admin deployed successfully"
+            sudo cp /opt/hotelsaas/nginx/hotelsaas-ec2.conf /etc/nginx/conf.d/hotelsaas.conf
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "Backend + Web Admin + Nginx deployed successfully"
 
       - name: Revoke runner SSH access
         if: always()
