@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { body, param, query, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
-const { Order, RestaurantTable, Guest, MenuItem, AuditLog, sequelize } = require('../models');
+const { Order, RestaurantTable, Guest, MenuItem, MenuCategory, AuditLog, sequelize } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { tenantScope } = require('../middleware/tenantScope');
 const websocketService = require('../services/websocketService');
@@ -36,7 +36,10 @@ const computeOrderTotals = async (items, taxRate = 0, discount = 0) => {
   }
 
   const menuItemIds = items.map(i => i.menuItemId);
-  const menuItems = await MenuItem.findAll({ where: { id: menuItemIds } });
+  const menuItems = await MenuItem.findAll({
+    where: { id: menuItemIds },
+    include: [{ model: MenuCategory, as: 'category', attributes: ['id', 'name'] }],
+  });
   const menuItemMap = new Map(menuItems.map(mi => [mi.id, mi]));
 
   let subtotal = 0;
@@ -69,6 +72,7 @@ const computeOrderTotals = async (items, taxRate = 0, discount = 0) => {
     return {
       menuItemId: menuItem.id,
       name: menuItem.name,
+      categoryName: menuItem.category?.name || '',
       quantity: item.quantity,
       price: parseFloat(menuItem.price),
       notes: item.notes || '',

@@ -148,11 +148,18 @@ export default function KitchenDisplay() {
 
                     <div className="space-y-1 mb-3">
                       {(order.items || []).map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-sm">
-                          <span className="text-gray-700 dark:text-gray-300">
-                            <span className="font-medium">{item.quantity}×</span> {item.name}
-                          </span>
-                          {item.notes && <span className="text-xs text-gray-400 italic">{item.notes}</span>}
+                        <div key={idx} className="text-sm">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-700 dark:text-gray-300">
+                              <span className="font-medium">{item.quantity}×</span> {item.name}
+                            </span>
+                            {item.notes && <span className="text-xs text-gray-400 italic">{item.notes}</span>}
+                          </div>
+                          {item.categoryName && (
+                            <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 mt-0.5">
+                              {item.categoryName}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>

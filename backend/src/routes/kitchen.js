@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth');
 const { tenantScope } = require('../middleware/tenantScope');
-const { Order, RestaurantTable, Guest } = require('../models');
+const { Order, RestaurantTable, Guest, MenuItem, MenuCategory } = require('../models');
 const { Op } = require('sequelize');
 
 // GET active kitchen orders (confirmed/preparing/ready — not pending, which hasn't been confirmed yet)
@@ -22,7 +22,32 @@ router.get('/orders', authenticate, tenantScope, async (req, res, next) => {
       ],
     });
 
-    res.json({ data: orders });
+    // Enrich items with category name for orders that don't already have it
+    const allMenuItemIds = new Set();
+    for (const order of orders) {
+      for (const item of (order.items || [])) {
+        if (!item.categoryName && item.menuItemId) allMenuItemIds.add(item.menuItemId);
+      }
+    }
+    let categoryMap = new Map();
+    if (allMenuItemIds.size > 0) {
+      const menuItems = await MenuItem.findAll({
+        where: { id: [...allMenuItemIds] },
+        include: [{ model: MenuCategory, as: 'category', attributes: ['name'] }],
+        attributes: ['id'],
+      });
+      categoryMap = new Map(menuItems.map(mi => [mi.id, mi.category?.name || '']));
+    }
+    const enriched = orders.map(o => {
+      const json = o.toJSON();
+      json.items = (json.items || []).map(item => ({
+        ...item,
+        categoryName: item.categoryName || categoryMap.get(item.menuItemId) || '',
+      }));
+      return json;
+    });
+
+    res.json({ data: enriched });
   } catch (error) { next(error); }
 });
 
