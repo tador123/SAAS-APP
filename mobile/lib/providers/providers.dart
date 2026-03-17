@@ -406,10 +406,14 @@ String _formatError(dynamic e) {
   if (e is DioException) {
     final data = e.response?.data;
     if (data is Map && data['message'] != null) return data['message'].toString();
+    if (data is Map && data['error'] != null) return data['error'].toString();
     if (e.type == DioExceptionType.connectionTimeout) return 'Connection timed out';
     if (e.type == DioExceptionType.connectionError) {
       if (!ConnectivityService.isOnline) return 'You are offline';
-      return 'Cannot connect to server';
+      return 'Cannot connect to server (${AuthService.baseUrl})';
+    }
+    if (e.response?.statusCode != null) {
+      return 'Server error (${e.response!.statusCode})';
     }
     return e.message ?? 'Network error';
   }

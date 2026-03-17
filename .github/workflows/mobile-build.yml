@@ -38,6 +38,16 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms android .
 
+      - name: Ensure Android permissions
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if ! grep -q 'android.permission.INTERNET' "$MANIFEST"; then
+            sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <application|' "$MANIFEST"
+            echo "Added INTERNET and ACCESS_NETWORK_STATE permissions"
+          fi
+          echo "--- AndroidManifest.xml ---"
+          cat "$MANIFEST"
+
       - name: Patch Android build config
         run: |
           # Fix minSdk for flutter_secure_storage (requires 23)
