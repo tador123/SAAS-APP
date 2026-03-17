@@ -31,13 +31,17 @@ app.use(requestId);   // assign unique request-id early
 app.use(helmet());
 
 // CORS configuration
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+const corsOriginsRaw = process.env.CORS_ORIGINS || '';
+const allowAllOrigins = corsOriginsRaw.trim() === '*';
+const allowedOrigins = corsOriginsRaw && !allowAllOrigins
+  ? corsOriginsRaw.split(',').map(o => o.trim())
   : ['http://localhost:80', 'http://localhost:5173', 'http://localhost:8888'];
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
+    // Allow all origins when CORS_ORIGINS=*
+    if (allowAllOrigins) return callback(null, true);
     // Allow Tauri desktop app origins
     if (origin === 'http://tauri.localhost' || origin === 'https://tauri.localhost') {
       return callback(null, true);
