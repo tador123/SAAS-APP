@@ -82,6 +82,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
@@ -124,7 +127,21 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             mv /opt/hotelsaas/downloads/app-release.apk /opt/hotelsaas/downloads/HotelSaaS.apk
-            echo "APK deployed to /downloads/HotelSaaS.apk"
+            echo "APK deployed to /api/downloads/HotelSaaS.apk"
+
+      - name: Sync nginx config and rebuild web-admin
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/hotelsaas
+            git pull origin main
+            sudo cp nginx/hotelsaas-ec2.conf /etc/nginx/conf.d/hotelsaas.conf
+            sudo nginx -t && sudo systemctl reload nginx
+            cd web-admin && npm install && npm run build
+            echo "Nginx config synced and web-admin rebuilt"
 
       - name: Revoke runner SSH access
         if: always()

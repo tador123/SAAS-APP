@@ -306,8 +306,8 @@ export default function LandingPage() {
                 Android app for guests — self-register, get QR codes, and order from your table.
               </p>
               <a
-                href="/downloads/HotelSaaS.apk"
-                download
+                href="/api/downloads/HotelSaaS.apk"
+                download="HotelSaaS.apk"
                 className="inline-flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-green-700 transition-colors"
               >
                 <Download size={16} />
