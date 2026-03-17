@@ -52,6 +52,7 @@ class Order {
   final String? notes;
   final RestaurantTable? table;
   final Guest? guest;
+  final DateTime? createdAt;
 
   const Order({
     required this.id,
@@ -69,6 +70,7 @@ class Order {
     this.notes,
     this.table,
     this.guest,
+    this.createdAt,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) => Order(
@@ -92,6 +94,7 @@ class Order {
             ? RestaurantTable.fromJson(json['table'])
             : null,
         guest: json['guest'] != null ? Guest.fromJson(json['guest']) : null,
+        createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'].toString()) : null,
       );
 
   static int? _toInt(dynamic v) => v is int ? v : v is num ? v.toInt() : v is String ? int.tryParse(v) : null;

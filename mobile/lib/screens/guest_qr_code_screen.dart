@@ -91,11 +91,11 @@ class GuestQRCodeScreen extends StatelessWidget {
                           size: 250,
                           backgroundColor: Colors.white,
                           eyeStyle: const QrEyeStyle(
-                            eyeShape: QrEyeShape.roundedOuter,
+                            eyeShape: QrEyeShape.square,
                             color: Color(0xFF2563EB),
                           ),
                           dataModuleStyle: const QrDataModuleStyle(
-                            dataModuleShape: QrDataModuleShape.roundedOuter,
+                            dataModuleShape: QrDataModuleShape.square,
                             color: Color(0xFF1E293B),
                           ),
                         ),
