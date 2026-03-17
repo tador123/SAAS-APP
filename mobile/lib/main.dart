@@ -24,6 +24,8 @@ import 'screens/housekeeping_screen.dart';
 import 'screens/kitchen_display_screen.dart';
 import 'screens/guest_folio_screen.dart';
 import 'screens/qr_ordering_screen.dart';
+import 'screens/guest_self_registration_screen.dart';
+import 'screens/guest_qr_code_screen.dart';
 import 'services/auth_service.dart';
 import 'services/offline_service.dart';
 import 'services/notification_service.dart';
@@ -78,6 +80,10 @@ final GoRouter _router = GoRouter(
       final loggedIn = await AuthService.isAuthenticated();
       final isLoginPage = state.matchedLocation == '/login';
       final isForgotPage = state.matchedLocation == '/forgot-password';
+      final isGuestRegister = state.matchedLocation == '/guest-register';
+      final isGuestQR = state.matchedLocation == '/guest-qr';
+      // Allow public guest registration routes without auth
+      if (isGuestRegister || isGuestQR) return null;
       if (!loggedIn && !isLoginPage && !isForgotPage) return '/login';
       if (loggedIn && isLoginPage) return '/';
     } catch (e) {
@@ -89,6 +95,24 @@ final GoRouter _router = GoRouter(
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
+    GoRoute(
+      path: '/guest-register',
+      builder: (context, state) {
+        final propertyId = state.uri.queryParameters['propertyId'];
+        return GuestSelfRegistrationScreen(propertyId: propertyId);
+      },
+    ),
+    GoRoute(
+      path: '/guest-qr',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        return GuestQRCodeScreen(
+          qrToken: extra['qrToken']?.toString() ?? '',
+          firstName: extra['firstName']?.toString() ?? '',
+          lastName: extra['lastName']?.toString() ?? '',
+        );
+      },
+    ),
     ShellRoute(
       builder: (context, state, child) => MainShell(child: child),
       routes: [

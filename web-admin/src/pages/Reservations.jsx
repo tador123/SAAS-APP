@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit2, Search, Download, Printer } from 'lucide-react';
 import api from '../api/axios';
 import Modal from '../components/Modal';
+import GuestQRScanner from '../components/GuestQRScanner';
 import StatusBadge from '../components/StatusBadge';
 import SortableHeader from '../components/SortableHeader';
 import { useSortable } from '../hooks/useSortable';
@@ -127,6 +128,14 @@ export default function Reservations() {
     }
   };
 
+  // Handle guest found via QR scan — open new reservation modal with guest pre-selected
+  const handleQRGuestFound = (guest) => {
+    setEditing(null);
+    clearErrors();
+    setForm({ ...defaultForm, guestId: guest.id });
+    setShowModal(true);
+  };
+
   if (loading) {
     return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-4 border-primary-600 border-t-transparent"></div></div>;
   }
@@ -138,9 +147,12 @@ export default function Reservations() {
           <h1 className="text-2xl font-bold text-gray-900">Reservations</h1>
           <p className="text-gray-500 text-sm mt-1">Manage bookings and check-ins</p>
         </div>
-        <button onClick={() => { setEditing(null); setForm(defaultForm); clearErrors(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> New Reservation
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => { setEditing(null); setForm(defaultForm); clearErrors(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
+            <Plus size={18} /> New Reservation
+          </button>
+          <GuestQRScanner onGuestFound={handleQRGuestFound} />
+        </div>
       </div>
 
       {/* Search & Export */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit2, Trash2, Search, Star, Download, Printer } from 'lucide-react';
 import api from '../api/axios';
 import Modal from '../components/Modal';
+import GuestQRScanner from '../components/GuestQRScanner';
 import SortableHeader from '../components/SortableHeader';
 import { useSortable } from '../hooks/useSortable';
 import Pagination from '../components/Pagination';
@@ -120,9 +121,23 @@ export default function Guests() {
           <h1 className="text-2xl font-bold text-gray-900">Guests</h1>
           <p className="text-gray-500 text-sm mt-1">Guest directory and management</p>
         </div>
-        <button onClick={() => { setEditing(null); setForm(defaultForm); clearErrors(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
-          <Plus size={18} /> Add Guest
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => { setEditing(null); setForm(defaultForm); clearErrors(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
+            <Plus size={18} /> Add Guest
+          </button>
+          <GuestQRScanner onGuestFound={(guest) => {
+            setEditing(guest);
+            clearErrors();
+            setForm({
+              firstName: guest.firstName || '', lastName: guest.lastName || '',
+              email: guest.email || '', phone: guest.phone || '',
+              nationality: guest.nationality || '', idType: guest.idType || '',
+              idNumber: guest.idNumber || '', address: guest.address || '',
+              vipStatus: guest.vipStatus || false, notes: guest.notes || '',
+            });
+            setShowModal(true);
+          }} />
+        </div>
       </div>
 
       {/* Search & Export */}

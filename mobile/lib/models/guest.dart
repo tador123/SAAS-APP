@@ -11,6 +11,7 @@ class Guest {
   final String? dateOfBirth;
   final bool vipStatus;
   final String? notes;
+  final String? qrToken;
 
   const Guest({
     required this.id,
@@ -25,6 +26,7 @@ class Guest {
     this.dateOfBirth,
     this.vipStatus = false,
     this.notes,
+    this.qrToken,
   });
 
   String get fullName => '$firstName $lastName';
@@ -44,6 +46,7 @@ class Guest {
         dateOfBirth: json['dateOfBirth']?.toString(),
         vipStatus: json['vipStatus'] == true,
         notes: json['notes']?.toString(),
+        qrToken: json['qrToken']?.toString(),
       );
 
   static int? _toInt(dynamic v) => v is int ? v : v is num ? v.toInt() : v is String ? int.tryParse(v) : null;
@@ -60,6 +63,7 @@ class Guest {
         'dateOfBirth': dateOfBirth,
         'vipStatus': vipStatus,
         'notes': notes,
+        'qrToken': qrToken,
       };
 
   Guest copyWith({
@@ -74,6 +78,7 @@ class Guest {
     String? dateOfBirth,
     bool? vipStatus,
     String? notes,
+    String? qrToken,
   }) =>
       Guest(
         id: id,
@@ -88,6 +93,7 @@ class Guest {
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
         vipStatus: vipStatus ?? this.vipStatus,
         notes: notes ?? this.notes,
+        qrToken: qrToken ?? this.qrToken,
       );
 
   static const idTypes = ['passport', 'national_id', 'drivers_license', 'other'];

@@ -45,6 +45,11 @@ const Guest = sequelize.define('Guest', {
   notes: {
     type: DataTypes.TEXT,
   },
+  qrToken: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+    unique: true,
+  },
   propertyId: {
     type: DataTypes.INTEGER,
     allowNull: true,
