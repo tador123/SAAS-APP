@@ -29,6 +29,9 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms android .
 
+      - name: Patch Android minSdkVersion
+        run: sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/' android/app/build.gradle.kts || sed -i 's/minSdkVersion .*/minSdkVersion 23/' android/app/build.gradle
+
       - name: Create placeholder google-services.json
         run: |
           mkdir -p android/app
