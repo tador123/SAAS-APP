@@ -148,7 +148,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     setState(() => _changingPlan = true);
     try {
-      final updatedUser = await AuthService.changePlan(newPlan);
+      await AuthService.changePlan(newPlan);
       ref.read(authProvider.notifier).refreshUser();
       await _loadSubscription();
       if (mounted) {

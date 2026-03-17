@@ -365,4 +365,55 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get housekeeping => 'Limpieza';
+
+  @override
+  String get addHousekeepingTask => 'Agregar tarea de limpieza';
+
+  @override
+  String get noHousekeepingTasks => 'Sin tareas de limpieza';
+
+  @override
+  String get taskType => 'Tipo de tarea';
+
+  @override
+  String get priority => 'Prioridad';
+
+  @override
+  String get kitchenDisplay => 'Pantalla de cocina';
+
+  @override
+  String get noKitchenOrders => 'Sin pedidos activos en cocina';
+
+  @override
+  String get guestFolio => 'Folio del huésped';
+
+  @override
+  String get roomCharges => 'Cargos de habitación';
+
+  @override
+  String get restaurantCharges => 'Cargos de restaurante';
+
+  @override
+  String get totalPaid => 'Total pagado';
+
+  @override
+  String get balance => 'Saldo';
+
+  @override
+  String get qrOrdering => 'Pedidos por QR';
+
+  @override
+  String get qrActive => 'Activo';
+
+  @override
+  String get qrNone => 'Sin QR';
+
+  @override
+  String get qrGenerate => 'Generar QR';
+
+  @override
+  String get qrRegenerate => 'Regenerar';
 }

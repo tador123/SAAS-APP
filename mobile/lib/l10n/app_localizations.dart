@@ -777,6 +777,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 item} other{{count} items}}'**
   String nItems(int count);
+
+  /// No description provided for @housekeeping.
+  ///
+  /// In en, this message translates to:
+  /// **'Housekeeping'**
+  String get housekeeping;
+
+  /// No description provided for @addHousekeepingTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Housekeeping Task'**
+  String get addHousekeepingTask;
+
+  /// No description provided for @noHousekeepingTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No housekeeping tasks'**
+  String get noHousekeepingTasks;
+
+  /// No description provided for @taskType.
+  ///
+  /// In en, this message translates to:
+  /// **'Task Type'**
+  String get taskType;
+
+  /// No description provided for @priority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get priority;
+
+  /// No description provided for @kitchenDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Kitchen Display'**
+  String get kitchenDisplay;
+
+  /// No description provided for @noKitchenOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'No active kitchen orders'**
+  String get noKitchenOrders;
+
+  /// No description provided for @guestFolio.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest Folio'**
+  String get guestFolio;
+
+  /// No description provided for @roomCharges.
+  ///
+  /// In en, this message translates to:
+  /// **'Room Charges'**
+  String get roomCharges;
+
+  /// No description provided for @restaurantCharges.
+  ///
+  /// In en, this message translates to:
+  /// **'Restaurant Charges'**
+  String get restaurantCharges;
+
+  /// No description provided for @totalPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Paid'**
+  String get totalPaid;
+
+  /// No description provided for @balance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance'**
+  String get balance;
+
+  /// No description provided for @qrOrdering.
+  ///
+  /// In en, this message translates to:
+  /// **'QR Ordering'**
+  String get qrOrdering;
+
+  /// No description provided for @qrActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get qrActive;
+
+  /// No description provided for @qrNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No QR'**
+  String get qrNone;
+
+  /// No description provided for @qrGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate QR'**
+  String get qrGenerate;
+
+  /// No description provided for @qrRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get qrRegenerate;
 }
 
 class _AppLocalizationsDelegate

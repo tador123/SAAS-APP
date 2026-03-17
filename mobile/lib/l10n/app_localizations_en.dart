@@ -364,4 +364,55 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get housekeeping => 'Housekeeping';
+
+  @override
+  String get addHousekeepingTask => 'Add Housekeeping Task';
+
+  @override
+  String get noHousekeepingTasks => 'No housekeeping tasks';
+
+  @override
+  String get taskType => 'Task Type';
+
+  @override
+  String get priority => 'Priority';
+
+  @override
+  String get kitchenDisplay => 'Kitchen Display';
+
+  @override
+  String get noKitchenOrders => 'No active kitchen orders';
+
+  @override
+  String get guestFolio => 'Guest Folio';
+
+  @override
+  String get roomCharges => 'Room Charges';
+
+  @override
+  String get restaurantCharges => 'Restaurant Charges';
+
+  @override
+  String get totalPaid => 'Total Paid';
+
+  @override
+  String get balance => 'Balance';
+
+  @override
+  String get qrOrdering => 'QR Ordering';
+
+  @override
+  String get qrActive => 'Active';
+
+  @override
+  String get qrNone => 'No QR';
+
+  @override
+  String get qrGenerate => 'Generate QR';
+
+  @override
+  String get qrRegenerate => 'Regenerate';
 }

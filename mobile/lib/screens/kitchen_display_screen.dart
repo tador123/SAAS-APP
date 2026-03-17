@@ -49,7 +49,8 @@ class _KitchenDisplayScreenState extends State<KitchenDisplayScreen> {
     }
   }
 
-  String _elapsed(DateTime created) {
+  String _elapsed(DateTime? created) {
+    if (created == null) return '—';
     final diff = DateTime.now().difference(created);
     if (diff.inHours > 0) return '${diff.inHours}h ${diff.inMinutes % 60}m';
     if (diff.inMinutes > 0) return '${diff.inMinutes}m';
