@@ -134,6 +134,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () => context.push('/forgot-password'),
                         child: const Text('Forgot Password?'),
                       ),
+                      const SizedBox(height: 24),
+                      const Divider(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Are you a guest?',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: () => context.push('/guest-register'),
+                        icon: const Icon(Icons.person_add_outlined),
+                        label: const Text('Self Check-in / Register'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                      ),
                     ],
                   ),
                 ),
