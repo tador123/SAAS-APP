@@ -147,8 +147,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         data: qrToken,
                         version: QrVersions.auto,
                         size: 200,
-                        eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.roundedRect, color: Color(0xFF2563EB)),
-                        dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.roundedRect, color: Color(0xFF1E293B)),
+                        eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF2563EB)),
+                        dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Color(0xFF1E293B)),
                       )
                     else
                       Container(

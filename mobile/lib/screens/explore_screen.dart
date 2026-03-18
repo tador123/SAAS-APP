@@ -22,7 +22,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     {'value': 'restaurant', 'label': 'Restaurants', 'icon': Icons.restaurant},
     {'value': 'resort', 'label': 'Resorts', 'icon': Icons.pool},
     {'value': 'boutique_hotel', 'label': 'Boutique', 'icon': Icons.villa},
-    {'value': 'hostel', 'label': 'Hostels', 'icon': Icons.bunk_bed},
+    {'value': 'hostel', 'label': 'Hostels', 'icon': Icons.night_shelter},
   ];
 
   @override
