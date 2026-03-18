@@ -43,6 +43,7 @@ class GuestAuthService {
         if (error.response?.statusCode == 401 &&
             !_isRefreshing &&
             error.requestOptions.path != '/guest-auth/login' &&
+            error.requestOptions.path != '/guest-auth/register' &&
             error.requestOptions.path != '/guest-auth/refresh-token') {
           final refreshed = await _tryRefreshToken();
           if (refreshed) {

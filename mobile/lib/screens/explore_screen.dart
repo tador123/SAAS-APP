@@ -43,7 +43,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _loading = false;
       });
     } catch (e) {
-      setState(() { _error = 'Failed to load properties'; _loading = false; });
+      debugPrint('[Explore] Load failed: $e');
+      setState(() { _error = 'Could not load properties. Pull down to retry.'; _loading = false; });
     }
   }
 

@@ -33,6 +33,13 @@ class _GuestLoginScreenState extends State<GuestLoginScreen> {
           SnackBar(content: Text(msg), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
+    } catch (e) {
+      debugPrint('[Login] Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong. Please try again.'), backgroundColor: Theme.of(context).colorScheme.error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

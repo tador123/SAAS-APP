@@ -41,6 +41,13 @@ class _GuestSignupScreenState extends State<GuestSignupScreen> {
           SnackBar(content: Text(msg), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
+    } catch (e) {
+      debugPrint('[Signup] Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Something went wrong: ${e.toString().length > 80 ? e.toString().substring(0, 80) : e}'), backgroundColor: Theme.of(context).colorScheme.error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

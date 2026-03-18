@@ -40,8 +40,8 @@ router.post('/register', [
 
     const { firstName, lastName, email, phone, password } = req.body;
 
-    // Check if email already exists
-    const existing = await Guest.findOne({ where: { email }, paranoid: false });
+    // Check if a global account already exists for this email
+    const existing = await Guest.findOne({ where: { email, propertyId: null }, paranoid: false });
     if (existing && existing.passwordHash) {
       return res.status(409).json({ error: 'An account with this email already exists. Please login.' });
     }

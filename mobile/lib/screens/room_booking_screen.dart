@@ -75,6 +75,13 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
           SnackBar(content: Text(msg), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
+    } catch (e) {
+      debugPrint('[Booking] Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Something went wrong. Please try again.'), backgroundColor: Theme.of(context).colorScheme.error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

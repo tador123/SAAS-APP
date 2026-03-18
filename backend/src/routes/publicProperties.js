@@ -105,7 +105,7 @@ router.get('/properties/:id/rooms', async (req, res, next) => {
       return res.status(404).json({ error: 'Property not found.' });
     }
 
-    const roomWhere = { propertyId: property.id };
+    const roomWhere = { propertyId: property.id, status: { [Op.notIn]: ['maintenance', 'out_of_order'] } };
 
     // If dates provided, exclude rooms with overlapping reservations
     let excludeRoomIds = [];

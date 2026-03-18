@@ -15,6 +15,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> with SingleTickerPr
   List<dynamic> _past = [];
   bool _loading = true;
 
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -23,11 +25,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> with SingleTickerPr
   }
 
   Future<void> _loadBookings() async {
-    setState(() => _loading = true);
+    setState(() { _loading = true; _error = null; });
     try {
       final data = await BookingService.getBookings();
       final bookings = data['bookings'] as List<dynamic>? ?? [];
-      final now = DateTime.now();
 
       _upcoming = bookings.where((b) {
         final status = b['status']?.toString();
@@ -41,7 +42,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> with SingleTickerPr
 
       setState(() => _loading = false);
     } catch (e) {
-      setState(() => _loading = false);
+      debugPrint('[Bookings] Load failed: $e');
+      setState(() { _error = 'Could not load bookings'; _loading = false; });
     }
   }
 
@@ -68,13 +70,26 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> with SingleTickerPr
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildBookingList(_upcoming, isEmpty: 'No upcoming bookings'),
-                        _buildBookingList(_past, isEmpty: 'No past bookings'),
-                      ],
-                    ),
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                              const SizedBox(height: 8),
+                              Text(_error!, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                              const SizedBox(height: 12),
+                              FilledButton.tonal(onPressed: _loadBookings, child: const Text('Retry')),
+                            ],
+                          ),
+                        )
+                      : TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildBookingList(_upcoming, isEmpty: 'No upcoming bookings'),
+                            _buildBookingList(_past, isEmpty: 'No past bookings'),
+                          ],
+                        ),
             ),
           ],
         ),

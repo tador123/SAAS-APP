@@ -69,6 +69,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SnackBar(content: Text(msg), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
+    } catch (e) {
+      debugPrint('[EditProfile] Error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Something went wrong. Please try again.'), backgroundColor: Theme.of(context).colorScheme.error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

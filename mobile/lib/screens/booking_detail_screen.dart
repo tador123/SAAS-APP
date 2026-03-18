@@ -60,6 +60,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         final msg = e.response?.data?['error']?.toString() ?? 'Failed to cancel';
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Something went wrong')));
+      }
     } finally {
       if (mounted) setState(() => _cancelling = false);
     }
