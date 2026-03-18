@@ -18,6 +18,7 @@ import 'services/guest_auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize theme from saved preference
   try {
     await themeModeNotifier.init();
   } catch (e) {
@@ -33,28 +34,19 @@ final GoRouter _router = GoRouter(
   redirect: (context, state) async {
     try {
       final loggedIn = await GuestAuthService.isAuthenticated();
-      final isLoginPage = state.matchedLocation == '/login';
-      final isSignupPage = state.matchedLocation == '/signup';
-
-      if (!loggedIn && !isLoginPage && !isSignupPage) return '/login';
-      if (loggedIn && (isLoginPage || isSignupPage)) return '/';
+      final isAuthPage = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+      if (!loggedIn && !isAuthPage) return '/login';
+      if (loggedIn && isAuthPage) return '/';
     } catch (e) {
       debugPrint('[Router] Auth check failed: $e');
-      if (state.matchedLocation != '/login') return '/login';
+      if (state.matchedLocation != '/login' && state.matchedLocation != '/signup') return '/login';
     }
     return null;
   },
   routes: [
     GoRoute(path: '/login', builder: (context, state) => const GuestLoginScreen()),
     GoRoute(path: '/signup', builder: (context, state) => const GuestSignupScreen()),
-    ShellRoute(
-      builder: (context, state, child) => ConsumerShell(child: child),
-      routes: [
-        GoRoute(path: '/', builder: (context, state) => const ExploreScreen()),
-        GoRoute(path: '/bookings', builder: (context, state) => const MyBookingsScreen()),
-        GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
-      ],
-    ),
+    // Property detail (outside shell so no bottom nav)
     GoRoute(
       path: '/property/:id',
       builder: (context, state) {
@@ -62,6 +54,7 @@ final GoRouter _router = GoRouter(
         return PropertyDetailScreen(propertyId: id);
       },
     ),
+    // Booking flow (outside shell)
     GoRoute(
       path: '/booking',
       builder: (context, state) {
@@ -72,6 +65,7 @@ final GoRouter _router = GoRouter(
         );
       },
     ),
+    // Booking detail (outside shell)
     GoRoute(
       path: '/bookings/:id',
       builder: (context, state) {
@@ -79,7 +73,17 @@ final GoRouter _router = GoRouter(
         return BookingDetailScreen(bookingId: id);
       },
     ),
+    // Edit profile
     GoRoute(path: '/edit-profile', builder: (context, state) => const EditProfileScreen()),
+    // Main app shell with bottom navigation
+    ShellRoute(
+      builder: (context, state, child) => ConsumerShell(child: child),
+      routes: [
+        GoRoute(path: '/', builder: (context, state) => const ExploreScreen()),
+        GoRoute(path: '/bookings', builder: (context, state) => const MyBookingsScreen()),
+        GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
+      ],
+    ),
   ],
 );
 
@@ -130,6 +134,7 @@ class HotelSaaSApp extends StatelessWidget {
         return MaterialApp.router(
           title: 'HotelSaaS',
           debugShowCheckedModeBanner: false,
+          // Localization
           locale: localeNotifier.locale,
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -156,33 +161,29 @@ class HotelSaaSApp extends StatelessWidget {
   }
 }
 
-/// Consumer app shell with bottom navigation: Explore, Bookings, Profile
 class ConsumerShell extends StatelessWidget {
   final Widget child;
   const ConsumerShell({super.key, required this.child});
 
-  int _getIndex(String location) {
-    if (location.startsWith('/bookings')) return 1;
-    if (location.startsWith('/profile')) return 2;
+  static const _routes = ['/', '/bookings', '/profile'];
+
+  int _indexForLocation(String location) {
+    for (int i = _routes.length - 1; i >= 0; i--) {
+      if (location == _routes[i] || location.startsWith('${_routes[i]}/')) return i;
+    }
     return 0;
   }
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    final currentIndex = _getIndex(location);
+    final currentIndex = _indexForLocation(location);
 
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0: context.go('/');
-            case 1: context.go('/bookings');
-            case 2: context.go('/profile');
-          }
-        },
+        onDestinationSelected: (i) => context.go(_routes[i]),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.explore_outlined),
@@ -190,12 +191,12 @@ class ConsumerShell extends StatelessWidget {
             label: 'Explore',
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today),
-            label: 'Bookings',
+            icon: Icon(Icons.luggage_outlined),
+            selectedIcon: Icon(Icons.luggage),
+            label: 'My Bookings',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outlined),
+            icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
