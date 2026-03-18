@@ -1,7 +1,14 @@
+import 'dart:convert';
 import '../services/guest_auth_service.dart';
 
 class PropertyService {
   static final _dio = GuestAuthService.dio;
+
+  static Map<String, dynamic> _parseJson(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is String) return jsonDecode(data) as Map<String, dynamic>;
+    return <String, dynamic>{};
+  }
 
   /// List properties with optional filters
   static Future<Map<String, dynamic>> getProperties({
@@ -24,13 +31,13 @@ class PropertyService {
     if (stars != null) params['stars'] = stars;
 
     final response = await _dio.get('/public/properties', queryParameters: params);
-    return response.data as Map<String, dynamic>;
+    return _parseJson(response.data);
   }
 
   /// Get property detail
   static Future<Map<String, dynamic>> getPropertyDetail(int id) async {
     final response = await _dio.get('/public/properties/$id');
-    final data = response.data as Map<String, dynamic>;
+    final data = _parseJson(response.data);
     return data['property'] as Map<String, dynamic>;
   }
 
@@ -41,14 +48,14 @@ class PropertyService {
     if (checkOut != null) params['checkOut'] = checkOut;
 
     final response = await _dio.get('/public/properties/$propertyId/rooms', queryParameters: params);
-    final data = response.data as Map<String, dynamic>;
+    final data = _parseJson(response.data);
     return data['rooms'] as List<dynamic>;
   }
 
   /// Get menu for a property
   static Future<List<dynamic>> getPropertyMenu(int propertyId) async {
     final response = await _dio.get('/public/properties/$propertyId/menu');
-    final data = response.data as Map<String, dynamic>;
+    final data = _parseJson(response.data);
     return data['categories'] as List<dynamic>;
   }
 }

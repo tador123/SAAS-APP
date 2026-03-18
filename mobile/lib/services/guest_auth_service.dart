@@ -65,6 +65,13 @@ class GuestAuthService {
 
   static Dio get dio => _dio;
 
+  /// Safely parse response data — handles both pre-parsed Map and raw String.
+  static Map<String, dynamic> _parseJson(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is String) return jsonDecode(data) as Map<String, dynamic>;
+    return <String, dynamic>{};
+  }
+
   static Future<bool> _tryRefreshToken() async {
     _isRefreshing = true;
     try {
@@ -81,7 +88,7 @@ class GuestAuthService {
         'refreshToken': refreshToken,
       });
 
-      final data = response.data as Map<String, dynamic>;
+      final data = _parseJson(response.data);
       await _storage.write(key: _tokenKey, value: data['token'] as String);
       if (data['refreshToken'] != null) {
         await _storage.write(key: _refreshTokenKey, value: data['refreshToken'] as String);
@@ -110,7 +117,7 @@ class GuestAuthService {
       'password': password,
     });
 
-    final data = response.data as Map<String, dynamic>;
+    final data = _parseJson(response.data);
     await _storage.write(key: _tokenKey, value: data['token'] as String);
     if (data['refreshToken'] != null) {
       await _storage.write(key: _refreshTokenKey, value: data['refreshToken'] as String);
@@ -125,7 +132,7 @@ class GuestAuthService {
       'password': password,
     });
 
-    final data = response.data as Map<String, dynamic>;
+    final data = _parseJson(response.data);
     await _storage.write(key: _tokenKey, value: data['token'] as String);
     if (data['refreshToken'] != null) {
       await _storage.write(key: _refreshTokenKey, value: data['refreshToken'] as String);
@@ -146,7 +153,7 @@ class GuestAuthService {
   static Future<Map<String, dynamic>?> getProfile() async {
     try {
       final response = await _dio.get('/guest-auth/profile');
-      final data = response.data as Map<String, dynamic>;
+      final data = _parseJson(response.data);
       return data['guest'] as Map<String, dynamic>?;
     } catch (e) {
       return null;
@@ -155,7 +162,7 @@ class GuestAuthService {
 
   static Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> updates) async {
     final response = await _dio.put('/guest-auth/profile', data: updates);
-    final data = response.data as Map<String, dynamic>;
+    final data = _parseJson(response.data);
     final guest = data['guest'] as Map<String, dynamic>;
     await _storage.write(key: _guestKey, value: jsonEncode(guest));
     return guest;
