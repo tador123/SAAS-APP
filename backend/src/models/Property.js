@@ -76,6 +76,42 @@ const Property = sequelize.define('Property', {
     allowNull: true,
     comment: 'User ID of the system admin who approved this property',
   },
+  type: {
+    type: DataTypes.ENUM('hotel', 'restaurant', 'resort', 'boutique_hotel', 'hostel'),
+    defaultValue: 'hotel',
+  },
+  city: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  amenities: {
+    type: DataTypes.JSONB,
+    defaultValue: [],
+  },
+  images: {
+    type: DataTypes.JSONB,
+    defaultValue: [],
+  },
+  stars: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  website: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  latitude: {
+    type: DataTypes.DECIMAL(10, 7),
+    allowNull: true,
+  },
+  longitude: {
+    type: DataTypes.DECIMAL(10, 7),
+    allowNull: true,
+  },
 }, {
   tableName: 'properties',
   timestamps: true,

@@ -19,6 +19,9 @@ const folioRoutes = require('./folio');
 const qrOrderingRoutes = require('./qrOrdering');
 const systemAdminRoutes = require('./systemAdmin');
 const guestRegistrationRoutes = require('./guestRegistration');
+const guestAuthRoutes = require('./guestAuth');
+const publicRoutes = require('./publicProperties');
+const guestBookingRoutes = require('./guestBookings');
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomRoutes);
@@ -38,6 +41,9 @@ router.use('/kitchen', kitchenRoutes);
 router.use('/folio', folioRoutes);
 router.use('/qr', qrOrderingRoutes);
 router.use('/guest-register', guestRegistrationRoutes);
+router.use('/guest-auth', guestAuthRoutes);
+router.use('/public', publicRoutes);
+router.use('/guest/bookings', guestBookingRoutes);
 router.use('/system-admin', systemAdminRoutes);
 
 module.exports = router;

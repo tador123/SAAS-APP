@@ -13,6 +13,7 @@ const AuditLog = require('./AuditLog');
 const PasswordReset = require('./PasswordReset');
 const Property = require('./Property');
 const HousekeepingTask = require('./HousekeepingTask');
+const GuestRefreshToken = require('./GuestRefreshToken');
 
 // === Associations ===
 
@@ -106,6 +107,10 @@ HousekeepingTask.belongsTo(User, { foreignKey: 'inspectedBy', as: 'inspector' })
 Property.hasMany(HousekeepingTask, { foreignKey: 'propertyId', as: 'housekeepingTasks' });
 HousekeepingTask.belongsTo(Property, { foreignKey: 'propertyId', as: 'property' });
 
+// Guest <-> GuestRefreshToken
+Guest.hasMany(GuestRefreshToken, { foreignKey: 'guestId', as: 'refreshTokens' });
+GuestRefreshToken.belongsTo(Guest, { foreignKey: 'guestId', as: 'guest' });
+
 module.exports = {
   sequelize,
   User,
@@ -122,4 +127,5 @@ module.exports = {
   PasswordReset,
   Property,
   HousekeepingTask,
+  GuestRefreshToken,
 };
