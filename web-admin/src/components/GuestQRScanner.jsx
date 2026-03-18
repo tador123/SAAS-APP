@@ -180,9 +180,9 @@ export default function GuestQRScanner({ onGuestFound }) {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
             <p className="font-medium mb-1">How it works:</p>
             <ol className="list-decimal list-inside space-y-0.5 text-blue-600">
-              <li>Guest registers via the mobile app and receives a QR code</li>
-              <li>At check-in, scan the QR code with a barcode scanner</li>
-              <li>Guest details are loaded instantly — select to use for reservation</li>
+              <li>Guest registers via the mobile app and receives a personal QR code</li>
+              <li>At check-in, scan the guest&apos;s QR code with a barcode scanner</li>
+              <li>Guest details are imported automatically &mdash; no manual entry needed</li>
             </ol>
           </div>
         </div>

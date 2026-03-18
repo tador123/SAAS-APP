@@ -5,9 +5,9 @@ import '../services/auth_service.dart';
 
 /// Public guest self-registration screen.
 /// No authentication required — guests fill in their details and receive a QR code.
+/// The QR code is a universal guest identity — works at any property.
 class GuestSelfRegistrationScreen extends StatefulWidget {
-  final String? propertyId;
-  const GuestSelfRegistrationScreen({super.key, this.propertyId});
+  const GuestSelfRegistrationScreen({super.key});
 
   @override
   State<GuestSelfRegistrationScreen> createState() =>
@@ -38,23 +38,12 @@ class _GuestSelfRegistrationScreenState
   String? _idType;
   DateTime? _dateOfBirth;
 
-  // Property ID entry (if not passed via route)
-  final _propertyIdCtrl = TextEditingController();
-
   static const _idTypes = [
     ('passport', 'Passport'),
     ('national_id', 'National ID'),
     ('drivers_license', "Driver's License"),
     ('other', 'Other'),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.propertyId != null) {
-      _propertyIdCtrl.text = widget.propertyId!;
-    }
-  }
 
   @override
   void dispose() {
@@ -65,18 +54,11 @@ class _GuestSelfRegistrationScreenState
     _idNumberCtrl.dispose();
     _nationalityCtrl.dispose();
     _addressCtrl.dispose();
-    _propertyIdCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    final propertyId = _propertyIdCtrl.text.trim();
-    if (propertyId.isEmpty) {
-      setState(() => _error = 'Property ID is required');
-      return;
-    }
 
     setState(() {
       _loading = true;
@@ -108,7 +90,7 @@ class _GuestSelfRegistrationScreenState
       }
 
       final response = await _dio.post(
-        '/guest-register/$propertyId',
+        '/guest-register',
         data: data,
       );
 
@@ -178,7 +160,7 @@ class _GuestSelfRegistrationScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Fill in your information below to get a personal QR code for quick check-in.',
+                  'Fill in your information to get a personal QR code. Show it at any hotel or restaurant for instant check-in — no paperwork needed!',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -197,22 +179,6 @@ class _GuestSelfRegistrationScreenState
                       _error!,
                       style: TextStyle(color: theme.colorScheme.onErrorContainer),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Property ID (hidden if passed via route)
-                if (widget.propertyId == null) ...[
-                  TextFormField(
-                    controller: _propertyIdCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Property ID *',
-                      prefixIcon: Icon(Icons.business),
-                      helperText: 'Ask the hotel front desk for the Property ID',
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 16),
                 ],

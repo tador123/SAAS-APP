@@ -98,8 +98,7 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/guest-register',
       builder: (context, state) {
-        final propertyId = state.uri.queryParameters['propertyId'];
-        return GuestSelfRegistrationScreen(propertyId: propertyId);
+        return const GuestSelfRegistrationScreen();
       },
     ),
     GoRoute(

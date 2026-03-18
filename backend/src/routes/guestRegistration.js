@@ -7,9 +7,9 @@ const { tenantScope } = require('../middleware/tenantScope');
 
 // ── Public endpoints (no auth — used by guests self-registering) ──
 
-// POST /api/guest-register/:propertyId — Guest self-registration (public)
-router.post('/:propertyId', [
-  param('propertyId').isInt({ min: 1 }),
+// POST /api/guest-register — Guest self-registration (public, property-agnostic)
+// Creates a universal guest profile with a QR code that works at any property.
+router.post('/', [
   body('firstName').trim().notEmpty().withMessage('First name is required').escape(),
   body('lastName').trim().notEmpty().withMessage('Last name is required').escape(),
   body('phone').trim().notEmpty().withMessage('Phone number is required').escape(),
@@ -24,16 +24,6 @@ router.post('/:propertyId', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ error: 'Validation failed', details: errors.array() });
-    }
-
-    const propertyId = parseInt(req.params.propertyId);
-
-    // Verify the property exists and is active
-    const property = await Property.findOne({
-      where: { id: propertyId, isActive: true, approvalStatus: 'approved' },
-    });
-    if (!property) {
-      return res.status(404).json({ error: 'Property not found or not active' });
     }
 
     const { firstName, lastName, phone, email, idType, idNumber, nationality, address, dateOfBirth } = req.body;
@@ -52,7 +42,7 @@ router.post('/:propertyId', [
       address: address || null,
       dateOfBirth: dateOfBirth || null,
       qrToken,
-      propertyId,
+      propertyId: null,
     });
 
     res.status(201).json({
@@ -96,7 +86,8 @@ router.get('/lookup/:token', async (req, res, next) => {
 
 // ── Authenticated endpoint for staff ──
 
-// GET /api/guest-register/scan/:token — Staff scans guest QR to pull up full details (authenticated)
+// GET /api/guest-register/scan/:token — Staff scans guest QR to import guest into their property (authenticated)
+// Looks up the guest globally by QR token, then copies/links the guest to the staff's property.
 router.get('/scan/:token', authenticate, tenantScope, async (req, res, next) => {
   try {
     const { token } = req.params;
@@ -104,15 +95,54 @@ router.get('/scan/:token', authenticate, tenantScope, async (req, res, next) => 
       return res.status(400).json({ error: 'Invalid token format' });
     }
 
-    const guest = await Guest.findOne({
-      where: { qrToken: token, propertyId: req.propertyId },
+    // Find the guest by QR token (globally, not filtered by property)
+    const sourceGuest = await Guest.findOne({
+      where: { qrToken: token },
     });
 
-    if (!guest) {
-      return res.status(404).json({ error: 'Guest not found for this property' });
+    if (!sourceGuest) {
+      return res.status(404).json({ error: 'Guest not found' });
     }
 
-    res.json({ guest });
+    // If this guest already belongs to the staff's property, return it directly
+    if (sourceGuest.propertyId === req.propertyId) {
+      return res.json({ guest: sourceGuest });
+    }
+
+    // Check if this guest was already imported into this property (by phone match)
+    let localGuest = await Guest.findOne({
+      where: { phone: sourceGuest.phone, propertyId: req.propertyId },
+    });
+
+    if (localGuest) {
+      // Update the local record with latest details from the QR profile
+      await localGuest.update({
+        firstName: sourceGuest.firstName,
+        lastName: sourceGuest.lastName,
+        email: sourceGuest.email,
+        idType: sourceGuest.idType,
+        idNumber: sourceGuest.idNumber,
+        nationality: sourceGuest.nationality,
+        address: sourceGuest.address,
+        dateOfBirth: sourceGuest.dateOfBirth,
+      });
+    } else {
+      // Import: create a local copy for this property
+      localGuest = await Guest.create({
+        firstName: sourceGuest.firstName,
+        lastName: sourceGuest.lastName,
+        phone: sourceGuest.phone,
+        email: sourceGuest.email,
+        idType: sourceGuest.idType,
+        idNumber: sourceGuest.idNumber,
+        nationality: sourceGuest.nationality,
+        address: sourceGuest.address,
+        dateOfBirth: sourceGuest.dateOfBirth,
+        propertyId: req.propertyId,
+      });
+    }
+
+    res.json({ guest: localGuest });
   } catch (error) {
     next(error);
   }
