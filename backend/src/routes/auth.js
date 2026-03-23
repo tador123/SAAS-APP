@@ -79,7 +79,7 @@ router.post('/signup', [
       slug = `${baseSlug}-${suffix++}`;
     }
 
-    // Create property (pending approval — not active until system admin approves)
+    // Create property (auto-approved and active)
     const property = await Property.create({
       name: propertyName,
       slug,
@@ -89,11 +89,12 @@ router.post('/signup', [
       country: country || null,
       timezone: timezone || 'UTC',
       subscriptionPlan: 'free',
-      isActive: false,
-      approvalStatus: 'pending',
+      isActive: true,
+      approvalStatus: 'approved',
+      approvedAt: new Date(),
     }, { transaction: t });
 
-    // Create admin user for this property (inactive until approved)
+    // Create admin user for this property
     const user = await User.create({
       username: email.split('@')[0] + '-' + property.id,
       email,
@@ -102,7 +103,7 @@ router.post('/signup', [
       lastName,
       phone,
       role: 'admin',
-      isActive: false,
+      isActive: true,
       propertyId: property.id,
     }, { transaction: t });
 
@@ -113,17 +114,36 @@ router.post('/signup', [
       action: 'create',
       entityType: 'Property',
       entityId: property.id,
-      changes: { via: 'self_signup', approvalStatus: 'pending' },
+      changes: { via: 'self_signup', approvalStatus: 'approved' },
       req,
     });
 
-    // Do NOT issue tokens — account pending approval
+    // Issue tokens immediately — property is auto-approved
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    );
+    const refreshToken = await RefreshToken.createForUser(user.id);
+    setRefreshCookie(res, refreshToken.token);
+
     res.status(201).json({
-      message: 'Account created successfully! Your account is pending approval by the system administrator. You will be notified once approved.',
-      pendingApproval: true,
+      message: 'Account created successfully! Your property is now live.',
+      token,
+      refreshToken: refreshToken.token,
+      expiresIn: 3600,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        propertyId: property.id,
+      },
       property: {
         id: property.id,
         name: property.name,
+        currency: property.currency,
       },
     });
   } catch (error) {

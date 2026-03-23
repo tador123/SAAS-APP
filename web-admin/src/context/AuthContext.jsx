@@ -115,12 +115,7 @@ export function AuthProvider({ children }) {
   const signup = async ({ propertyName, firstName, lastName, email, password, phone, currency, timezone }) => {
     const { data } = await api.post('/auth/signup', { propertyName, firstName, lastName, email, password, phone, currency, timezone });
 
-    // New signups are pending approval — don't auto-login
-    if (data.pendingApproval) {
-      return data;
-    }
-
-    // Legacy path (should not happen with new flow, but safe fallback)
+    // Auto-login after signup — property is auto-approved
     if (data.token) {
       tokenRef.current = data.token;
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
