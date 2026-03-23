@@ -11,7 +11,7 @@ class WebSocketService {
     this.joinedRooms = new Set();
   }
 
-  connect() {
+  connect(token) {
     if (this.socket?.connected) return;
 
     this.socket = io(SOCKET_URL, {
@@ -23,6 +23,7 @@ class WebSocketService {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,
+      auth: token ? { token } : undefined,
     });
 
     this.socket.on('connect', () => {
@@ -38,6 +39,12 @@ class WebSocketService {
     this.socket.on('connect_error', (err) => {
       console.warn('[WS] Connection error:', err.message);
     });
+  }
+
+  updateToken(token) {
+    if (this.socket) {
+      this.socket.auth = { token };
+    }
   }
 
   disconnect() {

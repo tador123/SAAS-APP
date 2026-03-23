@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import api from '../api/axios';
+import wsService from '../services/websocket';
 
 const AuthContext = createContext(null);
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }) {
         tokenRef.current = data.token;
         if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
         scheduleRefresh(data.expiresIn || 3600);
+        wsService.updateToken(data.token);
       } catch {
         // refresh failed — force logout
         tokenRef.current = null;
@@ -65,6 +67,7 @@ export function AuthProvider({ children }) {
             const { data } = await api.get('/auth/me');
             setUser(data.user);
             localStorage.setItem('user', JSON.stringify(data.user));
+            wsService.connect(legacyToken);
           } catch {
             tokenRef.current = null;
             localStorage.removeItem('token');
@@ -82,6 +85,7 @@ export function AuthProvider({ children }) {
         if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
         setUser(data.user || JSON.parse(savedUser));
         scheduleRefresh(data.expiresIn || 3600);
+        wsService.connect(data.token);
       } catch {
         // Refresh token expired — clean up
         localStorage.removeItem('refreshToken');
@@ -109,6 +113,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     setUser(data.user);
     scheduleRefresh(data.expiresIn || 3600);
+    wsService.connect(data.token);
     return data;
   };
 
@@ -122,6 +127,7 @@ export function AuthProvider({ children }) {
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser(data.user);
       scheduleRefresh(data.expiresIn || 3600);
+      wsService.connect(data.token);
     }
     return data;
   };
@@ -133,6 +139,7 @@ export function AuthProvider({ children }) {
     if (refreshToken) {
       try { await api.post('/auth/logout', { refreshToken }); } catch { /* ignore */ }
     }
+    wsService.disconnect();
     tokenRef.current = null;
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
