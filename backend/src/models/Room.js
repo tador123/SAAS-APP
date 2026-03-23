@@ -10,7 +10,6 @@ const Room = sequelize.define('Room', {
   roomNumber: {
     type: DataTypes.STRING(10),
     allowNull: false,
-    unique: true,
   },
   type: {
     type: DataTypes.ENUM('single', 'double', 'twin', 'suite', 'deluxe', 'penthouse'),
@@ -52,6 +51,9 @@ const Room = sequelize.define('Room', {
   tableName: 'rooms',
   timestamps: true,
   paranoid: true,
+  indexes: [
+    { unique: true, fields: ['propertyId', 'roomNumber'], where: { deletedAt: null } },
+  ],
 });
 
 module.exports = Room;

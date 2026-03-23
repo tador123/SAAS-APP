@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
-const { Property, Room, MenuCategory, MenuItem, Reservation } = require('../models');
+const { Property, Room, MenuCategory, MenuItem, Reservation, RestaurantTable } = require('../models');
 
 // GET /api/public/properties — List all approved, active properties
 router.get('/properties', async (req, res, next) => {
@@ -163,6 +163,30 @@ router.get('/properties/:id/menu', async (req, res, next) => {
     });
 
     res.json({ categories });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/public/properties/:id/tables — Restaurant tables for a property
+router.get('/properties/:id/tables', async (req, res, next) => {
+  try {
+    const property = await Property.findOne({
+      where: { id: req.params.id, isActive: true, approvalStatus: 'approved' },
+      attributes: ['id'],
+    });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found.' });
+    }
+
+    const tables = await RestaurantTable.findAll({
+      where: { propertyId: property.id, status: { [Op.ne]: 'maintenance' } },
+      attributes: ['id', 'tableNumber', 'capacity', 'status', 'location'],
+      order: [['tableNumber', 'ASC']],
+    });
+
+    res.json({ tables });
   } catch (error) {
     next(error);
   }

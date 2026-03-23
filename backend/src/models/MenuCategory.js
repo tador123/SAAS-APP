@@ -10,7 +10,6 @@ const MenuCategory = sequelize.define('MenuCategory', {
   name: {
     type: DataTypes.STRING(50),
     allowNull: false,
-    unique: true,
   },
   description: {
     type: DataTypes.TEXT,
@@ -32,6 +31,9 @@ const MenuCategory = sequelize.define('MenuCategory', {
   tableName: 'menu_categories',
   timestamps: true,
   paranoid: true,
+  indexes: [
+    { unique: true, fields: ['propertyId', 'name'], where: { deletedAt: null } },
+  ],
 });
 
 module.exports = MenuCategory;

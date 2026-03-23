@@ -10,7 +10,6 @@ const RestaurantTable = sequelize.define('RestaurantTable', {
   tableNumber: {
     type: DataTypes.STRING(10),
     allowNull: false,
-    unique: true,
   },
   capacity: {
     type: DataTypes.INTEGER,
@@ -34,6 +33,9 @@ const RestaurantTable = sequelize.define('RestaurantTable', {
   tableName: 'restaurant_tables',
   timestamps: true,
   paranoid: true,
+  indexes: [
+    { unique: true, fields: ['propertyId', 'tableNumber'], where: { deletedAt: null } },
+  ],
 });
 
 module.exports = RestaurantTable;

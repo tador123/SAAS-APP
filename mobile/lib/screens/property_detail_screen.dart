@@ -13,6 +13,7 @@ class PropertyDetailScreen extends StatefulWidget {
 class _PropertyDetailScreenState extends State<PropertyDetailScreen> with SingleTickerProviderStateMixin {
   Map<String, dynamic>? _property;
   List<dynamic> _rooms = [];
+  List<dynamic> _tables = [];
   List<dynamic> _menuCategories = [];
   bool _loading = true;
   late TabController _tabController;
@@ -20,7 +21,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
   }
 
@@ -30,11 +31,13 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
         PropertyService.getPropertyDetail(widget.propertyId),
         PropertyService.getPropertyRooms(widget.propertyId),
         PropertyService.getPropertyMenu(widget.propertyId),
+        PropertyService.getPropertyTables(widget.propertyId),
       ]);
       setState(() {
         _property = results[0] as Map<String, dynamic>;
         _rooms = results[1] as List<dynamic>;
         _menuCategories = results[2] as List<dynamic>;
+        _tables = results[3] as List<dynamic>;
         _loading = false;
       });
     } catch (e) {
@@ -144,6 +147,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
               controller: _tabController,
               tabs: [
                 Tab(text: 'Rooms (${_rooms.length})'),
+                Tab(text: 'Tables (${_tables.length})'),
                 Tab(text: 'Menu (${_menuCategories.length})'),
                 const Tab(text: 'Info'),
               ],
@@ -154,6 +158,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
                 controller: _tabController,
                 children: [
                   _buildRoomsList(theme),
+                  _buildTablesList(theme),
                   _buildMenuList(theme),
                   _buildInfoTab(theme),
                 ],
@@ -247,6 +252,54 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
                   ),
                 ],
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTablesList(ThemeData theme) {
+    if (_tables.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.table_restaurant_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
+            const SizedBox(height: 8),
+            Text('No tables available', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _tables.length,
+      itemBuilder: (context, index) {
+        final table = _tables[index] as Map<String, dynamic>;
+        final status = table['status']?.toString() ?? 'available';
+        final isAvailable = status == 'available';
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
+              child: Icon(Icons.table_restaurant, color: isAvailable ? Colors.green : Colors.orange),
+            ),
+            title: Text('Table ${table['tableNumber']}', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text('${table['capacity']} seats • ${table['location'] ?? 'Indoor'}',
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(isAvailable ? 'Available' : status[0].toUpperCase() + status.substring(1),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isAvailable ? Colors.green.shade700 : Colors.orange.shade700)),
             ),
           ),
         );

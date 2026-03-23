@@ -58,4 +58,11 @@ class PropertyService {
     final data = _parseJson(response.data);
     return data['categories'] as List<dynamic>;
   }
+
+  /// Get restaurant tables for a property
+  static Future<List<dynamic>> getPropertyTables(int propertyId) async {
+    final response = await _dio.get('/public/properties/$propertyId/tables');
+    final data = _parseJson(response.data);
+    return data['tables'] as List<dynamic>;
+  }
 }
