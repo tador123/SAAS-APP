@@ -125,7 +125,7 @@ export default function Guests() {
           <button onClick={() => { setEditing(null); setForm(defaultForm); clearErrors(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
             <Plus size={18} /> Add Guest
           </button>
-          <GuestQRScanner onGuestFound={(guest) => {
+          <GuestQRScanner mode="lookup" onGuestFound={(guest) => {
             setEditing(guest);
             clearErrors();
             setForm({

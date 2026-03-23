@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { QrCode, Search, X, UserCheck, Camera, Keyboard, Video, VideoOff } from 'lucide-react';
+import { QrCode, Search, X, UserCheck, Camera, Keyboard, Video, VideoOff, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import api from '../api/axios';
 import Modal from './Modal';
@@ -11,22 +11,19 @@ const TABS = [
 ];
 
 /**
- * GuestQRScanner — A button + modal component that lets staff look up a guest
- * by scanning a QR code via:
- *   1. Computer webcam / camera
- *   2. USB/Bluetooth barcode scanner device (keyboard input)
- *   3. Manual token paste
+ * GuestQRScanner — Staff scan a guest QR code to:
+ *   - mode="checkin" (Reservations page): Auto-check-in guest's today reservation
+ *   - mode="lookup"  (Guests page): Look up and import guest profile
  *
- * Works in both web-admin (browser) and desktop (Tauri) apps.
- *
- * @param {Function} onGuestFound - Callback with the full guest object when found
+ * @param {Function} onGuestFound - Callback: (guest) for lookup mode, ({ guest, reservation }) for checkin mode
+ * @param {'checkin'|'lookup'} mode - Operating mode (default: 'checkin')
  */
-export default function GuestQRScanner({ onGuestFound }) {
+export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState('camera');
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
-  const [guest, setGuest] = useState(null);
+  const [result, setResult] = useState(null); // { guest, reservation?, message? }
   const [error, setError] = useState('');
 
   // Camera state
@@ -34,35 +31,45 @@ export default function GuestQRScanner({ onGuestFound }) {
   const [cameraError, setCameraError] = useState('');
   const html5QrRef = useRef(null);
   const scannerContainerId = 'qr-camera-reader';
-
   const inputRef = useRef(null);
 
-  const lookupGuest = useCallback(async (qrToken) => {
+  const scanQR = useCallback(async (qrToken) => {
     const cleanToken = qrToken.trim();
     if (!cleanToken) return;
 
     setLoading(true);
     setError('');
-    setGuest(null);
+    setResult(null);
     try {
-      const res = await api.get(`/guest-register/scan/${encodeURIComponent(cleanToken)}`);
-      setGuest(res.data.guest);
+      if (mode === 'checkin') {
+        const res = await api.post('/reservations/checkin-by-qr', { qrToken: cleanToken });
+        setResult({ guest: res.data.guest, reservation: res.data.reservation, checkedIn: true });
+        toast.success(`${res.data.guest.firstName} ${res.data.guest.lastName} checked in!`);
+      } else {
+        const res = await api.get(`/guest-register/scan/${encodeURIComponent(cleanToken)}`);
+        setResult({ guest: res.data.guest });
+      }
     } catch (err) {
-      const msg = err.response?.status === 404
-        ? 'No guest found with this QR code'
-        : err.response?.data?.error || 'Lookup failed';
-      setError(msg);
+      if (mode === 'checkin' && err.response?.status === 404 && err.response?.data?.guest) {
+        // Guest found but no reservation for today
+        setResult({ guest: err.response.data.guest, noReservation: true });
+        setError(err.response.data.message || 'No reservation found for today');
+      } else {
+        const msg = err.response?.status === 404
+          ? 'No guest found with this QR code'
+          : err.response?.data?.error || 'Scan failed';
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   // Stop camera helper
   const stopCamera = useCallback(async () => {
     if (html5QrRef.current) {
       try {
         const state = html5QrRef.current.getState();
-        // 2 = SCANNING per html5-qrcode
         if (state === 2) {
           await html5QrRef.current.stop();
         }
@@ -75,12 +82,12 @@ export default function GuestQRScanner({ onGuestFound }) {
     setCameraActive(false);
   }, []);
 
-  // Clean up camera when modal closes or tab changes away from camera
+  // Clean up on modal close
   useEffect(() => {
     if (!open) {
       stopCamera();
       setToken('');
-      setGuest(null);
+      setResult(null);
       setError('');
       setCameraError('');
       setTab('camera');
@@ -88,12 +95,9 @@ export default function GuestQRScanner({ onGuestFound }) {
   }, [open, stopCamera]);
 
   useEffect(() => {
-    if (tab !== 'camera') {
-      stopCamera();
-    }
+    if (tab !== 'camera') stopCamera();
   }, [tab, stopCamera]);
 
-  // Focus input when switching to scanner tab
   useEffect(() => {
     if (open && tab === 'scanner') {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -103,9 +107,8 @@ export default function GuestQRScanner({ onGuestFound }) {
   const startCamera = async () => {
     setCameraError('');
     setError('');
-    setGuest(null);
+    setResult(null);
 
-    // Wait a tick so the container div is in the DOM
     await new Promise((r) => setTimeout(r, 100));
 
     const container = document.getElementById(scannerContainerId);
@@ -122,14 +125,11 @@ export default function GuestQRScanner({ onGuestFound }) {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
         (decodedText) => {
-          // QR decoded — stop camera and lookup
           stopCamera();
           setToken(decodedText);
-          lookupGuest(decodedText);
+          scanQR(decodedText);
         },
-        () => {
-          // scan attempt — no match yet, ignore
-        }
+        () => {}
       );
       setCameraActive(true);
     } catch (err) {
@@ -147,29 +147,36 @@ export default function GuestQRScanner({ onGuestFound }) {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      lookupGuest(token);
+      scanQR(token);
     }
   };
 
   const handleUseGuest = () => {
-    if (guest && onGuestFound) {
-      onGuestFound(guest);
-      toast.success(`Guest loaded: ${guest.firstName} ${guest.lastName}`);
+    if (result?.guest && onGuestFound) {
+      if (mode === 'checkin') {
+        onGuestFound({ guest: result.guest, reservation: result.reservation, checkedIn: result.checkedIn });
+      } else {
+        onGuestFound(result.guest);
+      }
       setOpen(false);
     }
   };
+
+  const isCheckin = mode === 'checkin';
+  const buttonLabel = isCheckin ? 'QR Check-In' : 'Scan Guest QR';
+  const modalTitle = isCheckin ? 'Quick Check-In — Scan QR Code' : 'Scan Guest QR Code';
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="btn-secondary flex items-center gap-2 text-sm"
-        title="Scan guest QR code for quick check-in"
+        className={`flex items-center gap-2 text-sm ${isCheckin ? 'btn-primary' : 'btn-secondary'}`}
+        title={isCheckin ? 'Scan guest QR to check in instantly' : 'Scan guest QR code for quick lookup'}
       >
-        <QrCode size={16} /> Scan Guest QR
+        <QrCode size={16} /> {buttonLabel}
       </button>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Scan Guest QR Code" size="lg">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title={modalTitle} size="lg">
         <div className="space-y-4">
           {/* Tabs */}
           <div className="flex border-b border-gray-200">
@@ -193,13 +200,13 @@ export default function GuestQRScanner({ onGuestFound }) {
           {tab === 'camera' && (
             <div className="space-y-3">
               <p className="text-sm text-gray-500">
-                Use your computer&apos;s camera to scan the guest&apos;s QR code.
+                {isCheckin
+                  ? 'Point camera at the guest\u2019s QR code to check them in instantly.'
+                  : 'Use your computer\u2019s camera to scan the guest\u2019s QR code.'}
               </p>
 
-              {/* Camera viewport */}
               <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ minHeight: 320 }}>
                 <div id={scannerContainerId} className="w-full" />
-
                 {!cameraActive && !cameraError && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-3">
                     <Video size={48} className="opacity-50" />
@@ -253,7 +260,7 @@ export default function GuestQRScanner({ onGuestFound }) {
                   />
                 </div>
                 <button
-                  onClick={() => lookupGuest(token)}
+                  onClick={() => scanQR(token)}
                   disabled={!token.trim() || loading}
                   className="btn-primary flex items-center gap-1"
                 >
@@ -262,22 +269,99 @@ export default function GuestQRScanner({ onGuestFound }) {
                   ) : (
                     <Search size={16} />
                   )}
-                  Lookup
+                  {isCheckin ? 'Check In' : 'Lookup'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Error */}
-          {error && (
+          {/* Error (only for errors without a guest result) */}
+          {error && !result?.noReservation && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               <X size={16} className="shrink-0" />
               {error}
             </div>
           )}
 
-          {/* Guest result card */}
-          {guest && (
+          {/* Check-in success */}
+          {result?.checkedIn && result.reservation && (
+            <div className="border border-green-200 bg-green-50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-green-700 font-semibold text-lg">
+                <CheckCircle size={22} />
+                Checked In Successfully!
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Guest:</span>
+                  <p className="font-medium text-gray-900">{result.guest.firstName} {result.guest.lastName}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Room:</span>
+                  <p className="font-medium text-gray-900">{result.reservation.room?.roomNumber} ({result.reservation.room?.type})</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Check In:</span>
+                  <p className="font-medium text-gray-900">{result.reservation.checkIn}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Check Out:</span>
+                  <p className="font-medium text-gray-900">{result.reservation.checkOut}</p>
+                </div>
+                {result.guest.phone && (
+                  <div>
+                    <span className="text-gray-500">Phone:</span>
+                    <p className="font-medium text-gray-900">{result.guest.phone}</p>
+                  </div>
+                )}
+                {result.guest.email && (
+                  <div>
+                    <span className="text-gray-500">Email:</span>
+                    <p className="font-medium text-gray-900">{result.guest.email}</p>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleUseGuest}
+                className="w-full btn-primary flex items-center justify-center gap-2 mt-2"
+              >
+                <CheckCircle size={16} />
+                Done
+              </button>
+            </div>
+          )}
+
+          {/* Guest found but no reservation for today (checkin mode) */}
+          {result?.noReservation && result.guest && (
+            <div className="border border-amber-200 bg-amber-50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-amber-700 font-medium">
+                <AlertTriangle size={18} />
+                Guest Found — No Reservation for Today
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Name:</span>
+                  <p className="font-medium text-gray-900">{result.guest.firstName} {result.guest.lastName}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Phone:</span>
+                  <p className="font-medium text-gray-900">{result.guest.phone}</p>
+                </div>
+              </div>
+              <p className="text-sm text-amber-600">
+                This guest does not have a reservation for today. You can create a walk-in reservation manually.
+              </p>
+              <button
+                onClick={handleUseGuest}
+                className="w-full btn-secondary flex items-center justify-center gap-2 mt-2"
+              >
+                <UserCheck size={16} />
+                Create Reservation for This Guest
+              </button>
+            </div>
+          )}
+
+          {/* Lookup mode: guest result card */}
+          {!isCheckin && result?.guest && !result.checkedIn && !result.noReservation && (
             <div className="border border-green-200 bg-green-50 rounded-lg p-4 space-y-3">
               <div className="flex items-center gap-2 text-green-700 font-medium">
                 <UserCheck size={18} />
@@ -286,42 +370,42 @@ export default function GuestQRScanner({ onGuestFound }) {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <span className="text-gray-500">Name:</span>
-                  <p className="font-medium text-gray-900">{guest.firstName} {guest.lastName}</p>
+                  <p className="font-medium text-gray-900">{result.guest.firstName} {result.guest.lastName}</p>
                 </div>
                 <div>
                   <span className="text-gray-500">Phone:</span>
-                  <p className="font-medium text-gray-900">{guest.phone}</p>
+                  <p className="font-medium text-gray-900">{result.guest.phone}</p>
                 </div>
-                {guest.email && (
+                {result.guest.email && (
                   <div>
                     <span className="text-gray-500">Email:</span>
-                    <p className="font-medium text-gray-900">{guest.email}</p>
+                    <p className="font-medium text-gray-900">{result.guest.email}</p>
                   </div>
                 )}
-                {guest.idType && (
+                {result.guest.idType && (
                   <div>
                     <span className="text-gray-500">ID:</span>
                     <p className="font-medium text-gray-900">
-                      {guest.idType.replace(/_/g, ' ')} — {guest.idNumber}
+                      {result.guest.idType.replace(/_/g, ' ')} — {result.guest.idNumber}
                     </p>
                   </div>
                 )}
-                {guest.nationality && (
+                {result.guest.nationality && (
                   <div>
                     <span className="text-gray-500">Nationality:</span>
-                    <p className="font-medium text-gray-900">{guest.nationality}</p>
+                    <p className="font-medium text-gray-900">{result.guest.nationality}</p>
                   </div>
                 )}
-                {guest.dateOfBirth && (
+                {result.guest.dateOfBirth && (
                   <div>
                     <span className="text-gray-500">Date of Birth:</span>
-                    <p className="font-medium text-gray-900">{guest.dateOfBirth}</p>
+                    <p className="font-medium text-gray-900">{result.guest.dateOfBirth}</p>
                   </div>
                 )}
-                {guest.address && (
+                {result.guest.address && (
                   <div className="col-span-2">
                     <span className="text-gray-500">Address:</span>
-                    <p className="font-medium text-gray-900">{guest.address}</p>
+                    <p className="font-medium text-gray-900">{result.guest.address}</p>
                   </div>
                 )}
               </div>
@@ -330,7 +414,7 @@ export default function GuestQRScanner({ onGuestFound }) {
                 className="w-full btn-primary flex items-center justify-center gap-2 mt-2"
               >
                 <UserCheck size={16} />
-                Use This Guest for Reservation
+                Use This Guest
               </button>
             </div>
           )}
@@ -339,9 +423,9 @@ export default function GuestQRScanner({ onGuestFound }) {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
             <p className="font-medium mb-1">How it works:</p>
             <ol className="list-decimal list-inside space-y-0.5 text-blue-600">
-              <li>Guest registers via the mobile app and receives a personal QR code</li>
-              <li>At check-in, use the <strong>Camera</strong> tab or a barcode scanner device</li>
-              <li>Guest details are imported automatically &mdash; no manual entry needed</li>
+              <li>Guest books via the mobile app and receives a personal QR code</li>
+              <li>At check-in, scan the QR code &mdash; {isCheckin ? 'guest is checked in instantly' : 'guest details are imported'}</li>
+              <li>{isCheckin ? 'No manual entry needed — room is marked occupied automatically' : 'No manual data entry needed'}</li>
             </ol>
           </div>
         </div>

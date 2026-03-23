@@ -300,6 +300,115 @@ router.put('/:id', authenticate, tenantScope, [
   }
 });
 
+// POST /api/reservations/checkin-by-qr — Scan guest QR code and auto-check-in their today's reservation
+router.post('/checkin-by-qr', authenticate, tenantScope, async (req, res, next) => {
+  const t = await sequelize.transaction({ isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE });
+  try {
+    const { qrToken } = req.body;
+    if (!qrToken || qrToken.trim().length !== 64) {
+      await t.rollback();
+      return res.status(400).json({ error: 'Invalid QR token format' });
+    }
+
+    // 1. Find the guest globally by QR token
+    const sourceGuest = await Guest.findOne({ where: { qrToken: qrToken.trim() }, transaction: t });
+    if (!sourceGuest) {
+      await t.rollback();
+      return res.status(404).json({ error: 'No guest found with this QR code' });
+    }
+
+    // 2. Find or import guest into this property
+    let localGuest;
+    if (sourceGuest.propertyId === req.propertyId) {
+      localGuest = sourceGuest;
+    } else {
+      localGuest = await Guest.findOne({
+        where: { phone: sourceGuest.phone, propertyId: req.propertyId },
+        transaction: t,
+      });
+      if (localGuest) {
+        await localGuest.update({
+          firstName: sourceGuest.firstName,
+          lastName: sourceGuest.lastName,
+          email: sourceGuest.email,
+          idType: sourceGuest.idType,
+          idNumber: sourceGuest.idNumber,
+          nationality: sourceGuest.nationality,
+          address: sourceGuest.address,
+          dateOfBirth: sourceGuest.dateOfBirth,
+        }, { transaction: t });
+      } else {
+        localGuest = await Guest.create({
+          firstName: sourceGuest.firstName,
+          lastName: sourceGuest.lastName,
+          phone: sourceGuest.phone,
+          email: sourceGuest.email,
+          idType: sourceGuest.idType,
+          idNumber: sourceGuest.idNumber,
+          nationality: sourceGuest.nationality,
+          address: sourceGuest.address,
+          dateOfBirth: sourceGuest.dateOfBirth,
+          propertyId: req.propertyId,
+        }, { transaction: t });
+      }
+    }
+
+    // 3. Find today's reservation for this guest (pending or confirmed)
+    const today = new Date().toISOString().slice(0, 10);
+    const reservation = await Reservation.findOne({
+      where: {
+        guestId: localGuest.id,
+        propertyId: req.propertyId,
+        checkIn: today,
+        status: { [Op.in]: ['pending', 'confirmed'] },
+      },
+      include: [
+        { model: Room, as: 'room', attributes: ['id', 'roomNumber', 'type', 'price'] },
+      ],
+      transaction: t,
+    });
+
+    if (!reservation) {
+      await t.rollback();
+      return res.status(404).json({
+        error: 'No reservation found for today',
+        guest: localGuest,
+        message: 'Guest found but has no reservation for today. You can create a new reservation manually.',
+      });
+    }
+
+    // 4. Auto check-in: update reservation status + room status
+    await reservation.update({ status: 'checked_in' }, { transaction: t });
+    await Room.update({ status: 'occupied' }, { where: { id: reservation.roomId }, transaction: t });
+
+    await t.commit();
+
+    // Re-fetch with full associations
+    const full = await Reservation.findByPk(reservation.id, {
+      include: [
+        { model: Guest, as: 'guest' },
+        { model: Room, as: 'room' },
+      ],
+    });
+
+    websocketService.emitReservationStatusChange(full.toJSON());
+    websocketService.emitDashboardRefresh();
+    await AuditLog.log({ userId: req.user.id, action: 'update', entityType: 'Reservation', entityId: reservation.id, req });
+
+    res.json({
+      message: 'Guest checked in successfully',
+      reservation: full,
+      guest: localGuest,
+    });
+  } catch (error) {
+    await t.rollback();
+    if (error.parent && error.parent.code === '40001') {
+      return res.status(409).json({ error: 'Check-in conflict — please try again' });
+    }
+    next(error);
+  }
+});
+
 // DELETE /api/reservations/:id
 router.delete('/:id', authenticate, authorize('admin', 'manager'), tenantScope, async (req, res, next) => {
   const t = await sequelize.transaction();

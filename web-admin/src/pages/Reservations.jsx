@@ -128,12 +128,18 @@ export default function Reservations() {
     }
   };
 
-  // Handle guest found via QR scan — open new reservation modal with guest pre-selected
-  const handleQRGuestFound = (guest) => {
-    setEditing(null);
-    clearErrors();
-    setForm({ ...defaultForm, guestId: guest.id });
-    setShowModal(true);
+  // Handle QR check-in result
+  const handleQRCheckIn = ({ guest, reservation, checkedIn }) => {
+    if (checkedIn) {
+      // Auto-checked in — just refresh the table
+      fetchData(pagination.page);
+    } else {
+      // Guest found but no reservation — open new reservation form with guest pre-selected
+      setEditing(null);
+      clearErrors();
+      setForm({ ...defaultForm, guestId: guest.id });
+      setShowModal(true);
+    }
   };
 
   if (loading) {
@@ -151,7 +157,7 @@ export default function Reservations() {
           <button onClick={() => { setEditing(null); setForm(defaultForm); clearErrors(); setShowModal(true); }} className="btn-primary flex items-center gap-2">
             <Plus size={18} /> New Reservation
           </button>
-          <GuestQRScanner onGuestFound={handleQRGuestFound} />
+          <GuestQRScanner mode="checkin" onGuestFound={handleQRCheckIn} />
         </div>
       </div>
 
