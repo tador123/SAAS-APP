@@ -27,20 +27,25 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
 
   Future<void> _loadData() async {
     try {
-      final results = await Future.wait([
-        PropertyService.getPropertyDetail(widget.propertyId),
-        PropertyService.getPropertyRooms(widget.propertyId),
-        PropertyService.getPropertyMenu(widget.propertyId),
-        PropertyService.getPropertyTables(widget.propertyId),
+      // Load property detail first — required for the page
+      final detail = await PropertyService.getPropertyDetail(widget.propertyId);
+
+      // Load rooms, menu, and tables independently — one failure shouldn't block others
+      final extras = await Future.wait([
+        PropertyService.getPropertyRooms(widget.propertyId).catchError((_) => <dynamic>[]),
+        PropertyService.getPropertyMenu(widget.propertyId).catchError((_) => <dynamic>[]),
+        PropertyService.getPropertyTables(widget.propertyId).catchError((_) => <dynamic>[]),
       ]);
+
       setState(() {
-        _property = results[0] as Map<String, dynamic>;
-        _rooms = results[1] as List<dynamic>;
-        _menuCategories = results[2] as List<dynamic>;
-        _tables = results[3] as List<dynamic>;
+        _property = detail;
+        _rooms = extras[0] as List<dynamic>;
+        _menuCategories = extras[1] as List<dynamic>;
+        _tables = extras[2] as List<dynamic>;
         _loading = false;
       });
     } catch (e) {
+      debugPrint('[PropertyDetail] Load failed: $e');
       setState(() => _loading = false);
     }
   }
