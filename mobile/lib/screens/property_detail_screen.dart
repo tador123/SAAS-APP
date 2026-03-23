@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/property_service.dart';
+import 'table_reservation_screen.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
   final int propertyId;
@@ -285,26 +286,82 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
         final table = _tables[index] as Map<String, dynamic>;
         final status = table['status']?.toString() ?? 'available';
         final isAvailable = status == 'available';
+        final reservedSlots = table['reservedSlots'] as List<dynamic>? ?? [];
 
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
-              child: Icon(Icons.table_restaurant, color: isAvailable ? Colors.green : Colors.orange),
-            ),
-            title: Text('Table ${table['tableNumber']}', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-            subtitle: Text('${table['capacity']} seats • ${table['location'] ?? 'Indoor'}',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: isAvailable || reservedSlots.length < 6 // allow if not fully booked
+                ? () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TableReservationScreen(
+                          table: table,
+                          property: _property!,
+                          menuCategories: _menuCategories,
+                        ),
+                      ),
+                    );
+                    if (result == true) _loadData();
+                  }
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
+                    child: Icon(Icons.table_restaurant, color: isAvailable ? Colors.green : Colors.orange),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Table ${table['tableNumber']}', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 2),
+                        Text('${table['capacity']} seats  •  ${table['location'] ?? 'Indoor'}',
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                        if (reservedSlots.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 4,
+                            children: reservedSlots.map((s) => Chip(
+                              label: Text(s['time']?.toString() ?? '', style: const TextStyle(fontSize: 10)),
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              backgroundColor: Colors.orange.shade50,
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                              padding: EdgeInsets.zero,
+                            )).toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: isAvailable || reservedSlots.length < 6
+                        ? () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TableReservationScreen(
+                                  table: table,
+                                  property: _property!,
+                                  menuCategories: _menuCategories,
+                                ),
+                              ),
+                            );
+                            if (result == true) _loadData();
+                          }
+                        : null,
+                    child: const Text('Reserve'),
+                  ),
+                ],
               ),
-              child: Text(isAvailable ? 'Available' : status[0].toUpperCase() + status.substring(1),
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isAvailable ? Colors.green.shade700 : Colors.orange.shade700)),
             ),
           ),
         );

@@ -22,6 +22,7 @@ const guestRegistrationRoutes = require('./guestRegistration');
 const guestAuthRoutes = require('./guestAuth');
 const publicRoutes = require('./publicProperties');
 const guestBookingRoutes = require('./guestBookings');
+const guestTableReservationRoutes = require('./guestTableReservations');
 
 router.use('/auth', authRoutes);
 router.use('/rooms', roomRoutes);
@@ -44,6 +45,7 @@ router.use('/guest-register', guestRegistrationRoutes);
 router.use('/guest-auth', guestAuthRoutes);
 router.use('/public', publicRoutes);
 router.use('/guest/bookings', guestBookingRoutes);
+router.use('/guest/table-reservations', guestTableReservationRoutes);
 router.use('/system-admin', systemAdminRoutes);
 
 module.exports = router;

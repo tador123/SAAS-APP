@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { Op } = require('sequelize');
-const { Property, Room, MenuCategory, MenuItem, Reservation, RestaurantTable } = require('../models');
+const { Property, Room, MenuCategory, MenuItem, Reservation, RestaurantTable, TableReservation } = require('../models');
 
 // GET /api/public/properties — List all approved, active properties
 router.get('/properties', async (req, res, next) => {
@@ -98,7 +98,7 @@ router.get('/properties/:id/rooms', async (req, res, next) => {
 
     const property = await Property.findOne({
       where: { id: req.params.id, isActive: true, approvalStatus: 'approved' },
-      attributes: ['id'],
+      attributes: ['id', 'timezone'],
     });
 
     if (!property) {
@@ -107,20 +107,23 @@ router.get('/properties/:id/rooms', async (req, res, next) => {
 
     const roomWhere = { propertyId: property.id, status: { [Op.notIn]: ['maintenance', 'cleaning'] } };
 
-    // If dates provided, exclude rooms with overlapping reservations
-    let excludeRoomIds = [];
-    if (checkIn && checkOut) {
-      const overlapping = await Reservation.findAll({
-        where: {
-          propertyId: property.id,
-          status: { [Op.notIn]: ['cancelled', 'no_show', 'checked_out'] },
-          checkIn: { [Op.lt]: checkOut },
-          checkOut: { [Op.gt]: checkIn },
-        },
-        attributes: ['roomId'],
-      });
-      excludeRoomIds = overlapping.map(r => r.roomId);
-    }
+    // Determine date range: use provided dates or default to today (property timezone)
+    const tz = property.timezone || 'UTC';
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    const rangeStart = checkIn || today;
+    const rangeEnd = checkOut || '2099-12-31';
+
+    // Exclude rooms with overlapping active reservations
+    const overlapping = await Reservation.findAll({
+      where: {
+        propertyId: property.id,
+        status: { [Op.notIn]: ['cancelled', 'no_show', 'checked_out'] },
+        checkIn: { [Op.lt]: rangeEnd },
+        checkOut: { [Op.gt]: rangeStart },
+      },
+      attributes: ['roomId'],
+    });
+    const excludeRoomIds = overlapping.map(r => r.roomId);
 
     if (excludeRoomIds.length > 0) {
       roomWhere.id = { [Op.notIn]: excludeRoomIds };
@@ -171,9 +174,11 @@ router.get('/properties/:id/menu', async (req, res, next) => {
 // GET /api/public/properties/:id/tables — Restaurant tables for a property
 router.get('/properties/:id/tables', async (req, res, next) => {
   try {
+    const { date } = req.query;
+
     const property = await Property.findOne({
       where: { id: req.params.id, isActive: true, approvalStatus: 'approved' },
-      attributes: ['id'],
+      attributes: ['id', 'timezone'],
     });
 
     if (!property) {
@@ -186,7 +191,37 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       order: [['tableNumber', 'ASC']],
     });
 
-    res.json({ tables });
+    // Get reservations for the requested date (or today) to show booked time slots
+    const tz = property.timezone || 'UTC';
+    const checkDate = date || new Date().toLocaleDateString('en-CA', { timeZone: tz });
+
+    const reservations = await TableReservation.findAll({
+      where: {
+        propertyId: property.id,
+        reservationDate: checkDate,
+        status: { [Op.notIn]: ['cancelled', 'no_show', 'completed'] },
+      },
+      attributes: ['tableId', 'reservationTime', 'partySize', 'status'],
+    });
+
+    // Group reserved time slots by table
+    const reservedSlots = {};
+    for (const r of reservations) {
+      if (!reservedSlots[r.tableId]) reservedSlots[r.tableId] = [];
+      reservedSlots[r.tableId].push({
+        time: r.reservationTime.slice(0, 5),
+        partySize: r.partySize,
+        status: r.status,
+      });
+    }
+
+    const tablesWithSlots = tables.map(t => {
+      const json = t.toJSON();
+      json.reservedSlots = reservedSlots[t.id] || [];
+      return json;
+    });
+
+    res.json({ tables: tablesWithSlots, date: checkDate });
   } catch (error) {
     next(error);
   }
