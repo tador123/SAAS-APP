@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../services/booking_service.dart';
+import '../services/guest_auth_service.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   final int bookingId;
@@ -15,6 +17,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   Map<String, dynamic>? _booking;
   bool _loading = true;
   bool _cancelling = false;
+  String? _qrToken;
 
   @override
   void initState() {
@@ -24,8 +27,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   Future<void> _load() async {
     try {
-      final data = await BookingService.getBookingDetail(widget.bookingId);
-      setState(() { _booking = data; _loading = false; });
+      final results = await Future.wait([
+        BookingService.getBookingDetail(widget.bookingId),
+        GuestAuthService.getStoredGuest(),
+      ]);
+      final data = results[0] as Map<String, dynamic>;
+      final guest = results[1] as Map<String, dynamic>?;
+      setState(() {
+        _booking = data;
+        _qrToken = guest?['qrToken']?.toString();
+        _loading = false;
+      });
     } catch (e) {
       setState(() => _loading = false);
     }
@@ -166,6 +178,39 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 ),
               ),
             ),
+
+            // QR Code for check-in
+            if (_qrToken != null && (status == 'pending' || status == 'confirmed')) ...[
+              const SizedBox(height: 24),
+              _section('Check-in QR Code'),
+              Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: QrImageView(
+                          data: _qrToken!,
+                          version: QrVersions.auto,
+                          size: 200,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text('Show this QR code at the front desk for check-in',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
 
             if (_booking!['specialRequests'] != null && _booking!['specialRequests'].toString().isNotEmpty) ...[
               const SizedBox(height: 24),

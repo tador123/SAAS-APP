@@ -91,7 +91,8 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final currency = widget.property['currency'] ?? 'USD';
-    final maxOccupancy = widget.room['maxOccupancy'] as int? ?? 4;
+    final rawOccupancy = widget.room['maxOccupancy'];
+    final maxOccupancy = (rawOccupancy is int ? rawOccupancy : int.tryParse(rawOccupancy?.toString() ?? '') ?? 4).clamp(1, 20);
 
     return Scaffold(
       appBar: AppBar(
@@ -345,26 +346,45 @@ class _CounterTile extends StatelessWidget {
         border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
           Text(label, style: theme.textTheme.bodyMedium),
+          const SizedBox(height: 8),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(
-                icon: const Icon(Icons.remove_circle_outline, size: 22),
-                onPressed: value > min ? () => onChanged(value - 1) : null,
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              Material(
+                color: value > min ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  onTap: value > min ? () => onChanged(value - 1) : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.remove, size: 20,
+                        color: value > min ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                  ),
+                ),
               ),
-              SizedBox(width: 28, child: Text('$value', textAlign: TextAlign.center, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold))),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline, size: 22),
-                onPressed: value < max ? () => onChanged(value + 1) : null,
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              SizedBox(
+                width: 40,
+                child: Text('$value', textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              ),
+              Material(
+                color: value < max ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  onTap: value < max ? () => onChanged(value + 1) : null,
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Icon(Icons.add, size: 20,
+                        color: value < max ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                  ),
+                ),
               ),
             ],
           ),
