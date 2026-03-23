@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { body, validationResult } = require('express-validator');
 const { Op, Transaction } = require('sequelize');
-const { Reservation, Guest, Room, AuditLog, sequelize } = require('../models');
+const { Reservation, Guest, Room, AuditLog, Property, sequelize } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { tenantScope } = require('../middleware/tenantScope');
 const websocketService = require('../services/websocketService');
@@ -354,21 +354,27 @@ router.post('/checkin-by-qr', authenticate, tenantScope, async (req, res, next) 
     }
 
     // 3. Find today's reservation for this guest (pending or confirmed)
-    const today = new Date().toISOString().slice(0, 10);
-    const reservation = await Reservation.findOne({
+    // Use property timezone to determine "today" correctly
+    const property = await Property.findByPk(req.propertyId, { attributes: ['timezone'], transaction: t });
+    const tz = property?.timezone || 'UTC';
+    const now = new Date();
+    const today = now.toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD format
+    const finalReservation = await Reservation.findOne({
       where: {
         guestId: localGuest.id,
         propertyId: req.propertyId,
-        checkIn: today,
+        checkIn: { [Op.lte]: today },
+        checkOut: { [Op.gt]: today },
         status: { [Op.in]: ['pending', 'confirmed'] },
       },
       include: [
         { model: Room, as: 'room', attributes: ['id', 'roomNumber', 'type', 'price'] },
       ],
+      order: [['checkIn', 'ASC']],
       transaction: t,
     });
 
-    if (!reservation) {
+    if (!finalReservation) {
       await t.rollback();
       return res.status(404).json({
         error: 'No reservation found for today',
@@ -378,13 +384,13 @@ router.post('/checkin-by-qr', authenticate, tenantScope, async (req, res, next) 
     }
 
     // 4. Auto check-in: update reservation status + room status
-    await reservation.update({ status: 'checked_in' }, { transaction: t });
-    await Room.update({ status: 'occupied' }, { where: { id: reservation.roomId }, transaction: t });
+    await finalReservation.update({ status: 'checked_in' }, { transaction: t });
+    await Room.update({ status: 'occupied' }, { where: { id: finalReservation.roomId }, transaction: t });
 
     await t.commit();
 
     // Re-fetch with full associations
-    const full = await Reservation.findByPk(reservation.id, {
+    const full = await Reservation.findByPk(finalReservation.id, {
       include: [
         { model: Guest, as: 'guest' },
         { model: Room, as: 'room' },
@@ -393,7 +399,7 @@ router.post('/checkin-by-qr', authenticate, tenantScope, async (req, res, next) 
 
     websocketService.emitReservationStatusChange(full.toJSON());
     websocketService.emitDashboardRefresh();
-    await AuditLog.log({ userId: req.user.id, action: 'update', entityType: 'Reservation', entityId: reservation.id, req });
+    await AuditLog.log({ userId: req.user.id, action: 'update', entityType: 'Reservation', entityId: finalReservation.id, req });
 
     res.json({
       message: 'Guest checked in successfully',
