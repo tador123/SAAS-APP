@@ -6,13 +6,14 @@
  * should be unique per property, not globally across all hotels.
  *
  * NOTE: The MigrationRunner provides its own transaction via the 3rd argument.
- * We use raw SQL to drop known index names directly.
+ * These are UNIQUE CONSTRAINTS (not standalone indexes), so we must use
+ * ALTER TABLE ... DROP CONSTRAINT instead of DROP INDEX.
  */
 module.exports = {
   async up(queryInterface, Sequelize, transaction) {
-    // ── rooms.roomNumber: drop global unique, add composite unique ──
+    // ── rooms.roomNumber: drop global unique constraint, add composite unique index ──
     await queryInterface.sequelize.query(
-      'DROP INDEX IF EXISTS "rooms_roomNumber_key"',
+      'ALTER TABLE rooms DROP CONSTRAINT IF EXISTS "rooms_roomNumber_key"',
       { transaction }
     );
     await queryInterface.addIndex('rooms', ['propertyId', 'roomNumber'], {
@@ -22,9 +23,9 @@ module.exports = {
       transaction,
     });
 
-    // ── menu_categories.name: drop global unique, add composite unique ──
+    // ── menu_categories.name: drop global unique constraint, add composite unique index ──
     await queryInterface.sequelize.query(
-      'DROP INDEX IF EXISTS "menu_categories_name_key"',
+      'ALTER TABLE menu_categories DROP CONSTRAINT IF EXISTS "menu_categories_name_key"',
       { transaction }
     );
     await queryInterface.addIndex('menu_categories', ['propertyId', 'name'], {
@@ -34,9 +35,9 @@ module.exports = {
       transaction,
     });
 
-    // ── restaurant_tables.tableNumber: drop global unique, add composite unique ──
+    // ── restaurant_tables.tableNumber: drop global unique constraint, add composite unique index ──
     await queryInterface.sequelize.query(
-      'DROP INDEX IF EXISTS "restaurant_tables_tableNumber_key"',
+      'ALTER TABLE restaurant_tables DROP CONSTRAINT IF EXISTS "restaurant_tables_tableNumber_key"',
       { transaction }
     );
     await queryInterface.addIndex('restaurant_tables', ['propertyId', 'tableNumber'], {
@@ -53,9 +54,9 @@ module.exports = {
     await queryInterface.removeIndex('menu_categories', 'menu_categories_property_name_unique', { transaction });
     await queryInterface.removeIndex('restaurant_tables', 'restaurant_tables_property_table_number_unique', { transaction });
 
-    // Restore global unique indexes
-    await queryInterface.addIndex('rooms', ['roomNumber'], { unique: true, name: 'rooms_roomNumber_key', transaction });
-    await queryInterface.addIndex('menu_categories', ['name'], { unique: true, name: 'menu_categories_name_key', transaction });
-    await queryInterface.addIndex('restaurant_tables', ['tableNumber'], { unique: true, name: 'restaurant_tables_tableNumber_key', transaction });
+    // Restore global unique constraints
+    await queryInterface.addConstraint('rooms', { fields: ['roomNumber'], type: 'unique', name: 'rooms_roomNumber_key', transaction });
+    await queryInterface.addConstraint('menu_categories', { fields: ['name'], type: 'unique', name: 'menu_categories_name_key', transaction });
+    await queryInterface.addConstraint('restaurant_tables', { fields: ['tableNumber'], type: 'unique', name: 'restaurant_tables_tableNumber_key', transaction });
   },
 };
