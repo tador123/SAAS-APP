@@ -50,6 +50,8 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
         const guest = res.data.guest;
         setResult({ guest, reservation: res.data.reservation, checkedIn: true });
         toast.success(`${guest?.firstName || 'Guest'} ${guest?.lastName || ''} checked in!`);
+        // Immediately notify parent to refresh reservations list
+        if (onGuestFound) onGuestFound({ guest, reservation: res.data.reservation, checkedIn: true });
       } else {
         const res = await api.get(`/guest-register/scan/${encodeURIComponent(cleanToken)}`);
         setResult({ guest: res.data.guest });
@@ -71,7 +73,7 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
       setLoading(false);
       scanningRef.current = false;
     }
-  }, [mode]);
+  }, [mode, onGuestFound]);
 
   // Stop camera helper
   const stopCamera = useCallback(async () => {

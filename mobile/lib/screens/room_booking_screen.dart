@@ -188,7 +188,12 @@ class _RoomBookingScreenState extends State<RoomBookingScreen> {
                     value: _adults,
                     min: 1,
                     max: maxOccupancy,
-                    onChanged: (v) => setState(() => _adults = v),
+                    onChanged: (v) => setState(() {
+                      _adults = v;
+                      if (_adults + _children > maxOccupancy) {
+                        _children = (maxOccupancy - _adults).clamp(0, maxOccupancy);
+                      }
+                    }),
                   ),
                 ),
                 const SizedBox(width: 12),
