@@ -50,15 +50,17 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
         setResult({ guest: res.data.guest });
       }
     } catch (err) {
+      console.error('[QR Scan] Error:', err.response?.status, err.response?.data || err.message);
       if (mode === 'checkin' && err.response?.status === 404 && err.response?.data?.guest) {
         // Guest found but no reservation for today
         setResult({ guest: err.response.data.guest, noReservation: true });
         setError(err.response.data.message || 'No reservation found for today');
+      } else if (err.response?.status === 404) {
+        setError('No guest found with this QR code');
+      } else if (err.response?.status === 400) {
+        setError(err.response.data?.error || 'Invalid QR code format');
       } else {
-        const msg = err.response?.status === 404
-          ? 'No guest found with this QR code'
-          : err.response?.data?.error || 'Scan failed';
-        setError(msg);
+        setError(err.response?.data?.error || err.message || 'Scan failed — please try again');
       }
     } finally {
       setLoading(false);
