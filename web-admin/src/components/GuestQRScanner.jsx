@@ -32,10 +32,14 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
   const html5QrRef = useRef(null);
   const scannerContainerId = 'qr-camera-reader';
   const inputRef = useRef(null);
+  const scanningRef = useRef(false);
 
   const scanQR = useCallback(async (qrToken) => {
     const cleanToken = qrToken.trim();
     if (!cleanToken) return;
+    // Prevent duplicate concurrent scans (camera fires multiple callbacks)
+    if (scanningRef.current) return;
+    scanningRef.current = true;
 
     setLoading(true);
     setError('');
@@ -43,8 +47,9 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
     try {
       if (mode === 'checkin') {
         const res = await api.post('/reservations/checkin-by-qr', { qrToken: cleanToken });
-        setResult({ guest: res.data.guest, reservation: res.data.reservation, checkedIn: true });
-        toast.success(`${res.data.guest.firstName} ${res.data.guest.lastName} checked in!`);
+        const guest = res.data.guest;
+        setResult({ guest, reservation: res.data.reservation, checkedIn: true });
+        toast.success(`${guest?.firstName || 'Guest'} ${guest?.lastName || ''} checked in!`);
       } else {
         const res = await api.get(`/guest-register/scan/${encodeURIComponent(cleanToken)}`);
         setResult({ guest: res.data.guest });
@@ -64,6 +69,7 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
       }
     } finally {
       setLoading(false);
+      scanningRef.current = false;
     }
   }, [mode]);
 
@@ -127,6 +133,7 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
         (decodedText) => {
+          if (scanningRef.current) return;
           stopCamera();
           setToken(decodedText);
           scanQR(decodedText);
