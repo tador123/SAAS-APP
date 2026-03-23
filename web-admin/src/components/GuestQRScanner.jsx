@@ -1,35 +1,43 @@
-import { useState, useRef, useEffect } from 'react';
-import { QrCode, Search, X, UserCheck } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { QrCode, Search, X, UserCheck, Camera, Keyboard, Video, VideoOff } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
 import api from '../api/axios';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
 
+const TABS = [
+  { id: 'camera', label: 'Camera', icon: Camera },
+  { id: 'scanner', label: 'Scanner / Paste', icon: Keyboard },
+];
+
 /**
  * GuestQRScanner — A button + modal component that lets staff look up a guest
- * by scanning/entering a QR token. Works with USB/Bluetooth barcode scanners
- * (which act as keyboard input) or manual paste.
+ * by scanning a QR code via:
+ *   1. Computer webcam / camera
+ *   2. USB/Bluetooth barcode scanner device (keyboard input)
+ *   3. Manual token paste
+ *
+ * Works in both web-admin (browser) and desktop (Tauri) apps.
  *
  * @param {Function} onGuestFound - Callback with the full guest object when found
  */
 export default function GuestQRScanner({ onGuestFound }) {
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState('camera');
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [guest, setGuest] = useState(null);
   const [error, setError] = useState('');
+
+  // Camera state
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const html5QrRef = useRef(null);
+  const scannerContainerId = 'qr-camera-reader';
+
   const inputRef = useRef(null);
 
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    } else {
-      setToken('');
-      setGuest(null);
-      setError('');
-    }
-  }, [open]);
-
-  const lookupGuest = async (qrToken) => {
+  const lookupGuest = useCallback(async (qrToken) => {
     const cleanToken = qrToken.trim();
     if (!cleanToken) return;
 
@@ -37,7 +45,7 @@ export default function GuestQRScanner({ onGuestFound }) {
     setError('');
     setGuest(null);
     try {
-      const res = await api.get(`/guest-register/scan/${cleanToken}`);
+      const res = await api.get(`/guest-register/scan/${encodeURIComponent(cleanToken)}`);
       setGuest(res.data.guest);
     } catch (err) {
       const msg = err.response?.status === 404
@@ -46,6 +54,93 @@ export default function GuestQRScanner({ onGuestFound }) {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Stop camera helper
+  const stopCamera = useCallback(async () => {
+    if (html5QrRef.current) {
+      try {
+        const state = html5QrRef.current.getState();
+        // 2 = SCANNING per html5-qrcode
+        if (state === 2) {
+          await html5QrRef.current.stop();
+        }
+      } catch {
+        // ignore stop errors
+      }
+      html5QrRef.current.clear();
+      html5QrRef.current = null;
+    }
+    setCameraActive(false);
+  }, []);
+
+  // Clean up camera when modal closes or tab changes away from camera
+  useEffect(() => {
+    if (!open) {
+      stopCamera();
+      setToken('');
+      setGuest(null);
+      setError('');
+      setCameraError('');
+      setTab('camera');
+    }
+  }, [open, stopCamera]);
+
+  useEffect(() => {
+    if (tab !== 'camera') {
+      stopCamera();
+    }
+  }, [tab, stopCamera]);
+
+  // Focus input when switching to scanner tab
+  useEffect(() => {
+    if (open && tab === 'scanner') {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [open, tab]);
+
+  const startCamera = async () => {
+    setCameraError('');
+    setError('');
+    setGuest(null);
+
+    // Wait a tick so the container div is in the DOM
+    await new Promise((r) => setTimeout(r, 100));
+
+    const container = document.getElementById(scannerContainerId);
+    if (!container) {
+      setCameraError('Scanner container not found. Please try again.');
+      return;
+    }
+
+    try {
+      const scanner = new Html5Qrcode(scannerContainerId);
+      html5QrRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+        (decodedText) => {
+          // QR decoded — stop camera and lookup
+          stopCamera();
+          setToken(decodedText);
+          lookupGuest(decodedText);
+        },
+        () => {
+          // scan attempt — no match yet, ignore
+        }
+      );
+      setCameraActive(true);
+    } catch (err) {
+      const msg =
+        err?.toString().includes('NotAllowedError') || err?.toString().includes('Permission')
+          ? 'Camera permission denied. Please allow camera access and try again.'
+          : err?.toString().includes('NotFoundError')
+            ? 'No camera found on this device. Use the Scanner / Paste tab instead.'
+            : `Camera error: ${err?.message || err}`;
+      setCameraError(msg);
+      setCameraActive(false);
     }
   };
 
@@ -74,45 +169,109 @@ export default function GuestQRScanner({ onGuestFound }) {
         <QrCode size={16} /> Scan Guest QR
       </button>
 
-      <Modal isOpen={open} onClose={() => setOpen(false)} title="Scan Guest QR Code" size="md">
+      <Modal isOpen={open} onClose={() => setOpen(false)} title="Scan Guest QR Code" size="lg">
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Scan the guest&apos;s QR code with a barcode scanner, or paste the QR token below.
-          </p>
-
-          {/* Token input */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <QrCode size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="input-field pl-9 font-mono text-sm"
-                placeholder="Scan or paste QR token here..."
-                autoFocus
-              />
-            </div>
-            <button
-              onClick={() => lookupGuest(token)}
-              disabled={!token.trim() || loading}
-              className="btn-primary flex items-center gap-1"
-            >
-              {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-              ) : (
-                <Search size={16} />
-              )}
-              Lookup
-            </button>
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200">
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  tab === id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Icon size={16} />
+                {label}
+              </button>
+            ))}
           </div>
+
+          {/* Camera Tab */}
+          {tab === 'camera' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">
+                Use your computer&apos;s camera to scan the guest&apos;s QR code.
+              </p>
+
+              {/* Camera viewport */}
+              <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ minHeight: 320 }}>
+                <div id={scannerContainerId} className="w-full" />
+
+                {!cameraActive && !cameraError && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-3">
+                    <Video size={48} className="opacity-50" />
+                    <button onClick={startCamera} className="btn-primary flex items-center gap-2">
+                      <Camera size={16} />
+                      Start Camera
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {cameraActive && (
+                <button
+                  onClick={stopCamera}
+                  className="btn-secondary flex items-center gap-2 text-sm w-full justify-center"
+                >
+                  <VideoOff size={16} />
+                  Stop Camera
+                </button>
+              )}
+
+              {cameraError && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+                  <X size={16} className="shrink-0" />
+                  <span>{cameraError}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Scanner / Paste Tab */}
+          {tab === 'scanner' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-500">
+                Scan with a USB/Bluetooth barcode scanner, or paste the QR token manually.
+                Scanner devices send keystrokes ending with Enter &mdash; just click the input and scan.
+              </p>
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <QrCode size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="input-field pl-9 font-mono text-sm"
+                    placeholder="Scan or paste QR token here..."
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => lookupGuest(token)}
+                  disabled={!token.trim() || loading}
+                  className="btn-primary flex items-center gap-1"
+                >
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  ) : (
+                    <Search size={16} />
+                  )}
+                  Lookup
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Error */}
           {error && (
             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <X size={16} />
+              <X size={16} className="shrink-0" />
               {error}
             </div>
           )}
@@ -181,7 +340,7 @@ export default function GuestQRScanner({ onGuestFound }) {
             <p className="font-medium mb-1">How it works:</p>
             <ol className="list-decimal list-inside space-y-0.5 text-blue-600">
               <li>Guest registers via the mobile app and receives a personal QR code</li>
-              <li>At check-in, scan the guest&apos;s QR code with a barcode scanner</li>
+              <li>At check-in, use the <strong>Camera</strong> tab or a barcode scanner device</li>
               <li>Guest details are imported automatically &mdash; no manual entry needed</li>
             </ol>
           </div>
