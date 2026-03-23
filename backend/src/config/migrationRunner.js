@@ -17,20 +17,13 @@ class MigrationRunner {
   }
 
   async ensureMetaTable() {
-    await this.queryInterface.createTable('SequelizeMeta', {
-      name: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-        primaryKey: true,
-      },
-      executedAt: {
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
-      },
-    }).catch(() => {
-      // Table already exists, that's fine
-    });
+    // Use IF NOT EXISTS to avoid errors that can poison the connection pool
+    await this.sequelize.query(`
+      CREATE TABLE IF NOT EXISTS "SequelizeMeta" (
+        name VARCHAR(255) NOT NULL PRIMARY KEY,
+        "executedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
   }
 
   async getAppliedMigrations() {
