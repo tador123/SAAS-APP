@@ -135,8 +135,7 @@ jobs:
             git pull origin main
             cd backend
             npm install --omit=dev
-            npm run migrate
-            pm2 restart hotelsaas-api
+            pm2 restart hotel-backend
             cd ../web-admin
             npm install
             npm run build
