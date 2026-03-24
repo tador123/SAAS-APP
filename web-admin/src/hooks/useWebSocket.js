@@ -13,7 +13,8 @@ export function useWebSocket(rooms = [], events = {}, enabled = true) {
   useEffect(() => {
     if (!enabled) return;
 
-    wsService.connect();
+    // Don't call connect() here — AuthContext manages the connection with proper auth.
+    // Just join rooms and register event handlers.
     const roomList = Array.isArray(rooms) ? rooms : [rooms];
     roomList.forEach(room => wsService.joinRoom(room));
 

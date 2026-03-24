@@ -12,7 +12,21 @@ class WebSocketService {
   }
 
   connect(token) {
-    if (this.socket?.connected) return;
+    // If already connected with valid auth, just update token if provided
+    if (this.socket?.connected) {
+      if (token) this.socket.auth = { token };
+      return;
+    }
+
+    // Don't create a new connection without a token (auth required)
+    if (!token && !this.socket) return;
+
+    // If socket exists but disconnected, update auth and reconnect
+    if (this.socket && token) {
+      this.socket.auth = { token };
+      this.socket.connect();
+      return;
+    }
 
     this.socket = io(SOCKET_URL, {
       path: '/ws',
@@ -24,6 +38,11 @@ class WebSocketService {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,
       auth: token ? { token } : undefined,
+    });
+
+    // Register any listeners that were tracked before socket existed
+    this.listeners.forEach((callbacks, event) => {
+      callbacks.forEach(cb => this.socket.on(event, cb));
     });
 
     this.socket.on('connect', () => {
@@ -71,11 +90,13 @@ class WebSocketService {
   }
 
   on(event, callback) {
-    if (!this.socket) return;
-    this.socket.on(event, callback);
-    // track for cleanup
+    // Always track the listener — socket may not exist yet
     if (!this.listeners.has(event)) this.listeners.set(event, []);
     this.listeners.get(event).push(callback);
+    // Register on current socket if connected
+    if (this.socket) {
+      this.socket.on(event, callback);
+    }
   }
 
   off(event, callback) {
