@@ -58,9 +58,9 @@ export default function Reservations() {
 
   useEffect(() => { fetchData(); }, [debouncedSearch]);
 
-  const fetchData = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async (page = 1, { silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const params = { page, limit: 15 };
       if (debouncedSearch) params.search = debouncedSearch;
       const [resRes, guestRes, roomRes] = await Promise.all([
@@ -78,14 +78,14 @@ export default function Reservations() {
       setGuests(guestRes.data.guests || guestRes.data.data || guestRes.data || []);
       setRooms(roomRes.data.rooms || roomRes.data.data || roomRes.data || []);
     } catch {
-      toast.error('Failed to load data');
+      if (!silent) toast.error('Failed to load data');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [debouncedSearch]);
 
-  // Real-time WS: auto-refresh when reservations change
-  const handleReservationsRefresh = useCallback(() => { fetchData(pagination.page); }, [fetchData, pagination.page]);
+  // Real-time WS: silently stream live data without disturbing the admin
+  const handleReservationsRefresh = useCallback(() => { fetchData(pagination.page, { silent: true }); }, [fetchData, pagination.page]);
   useWebSocket(['reservations', 'notifications'], {
     'reservation:new': handleReservationsRefresh,
     'reservation:status': handleReservationsRefresh,

@@ -23,19 +23,9 @@ export default function Restaurant() {
   const [uploading, setUploading] = useState(false);
   const confirm = useConfirm();
 
-  useEffect(() => { fetchData(); }, []);
-
-  // Real-time WS: auto-refresh tables when reservations change
-  const handleRestaurantRefresh = useCallback(() => { fetchData(); }, []);
-  useWebSocket(['reservations', 'orders'], {
-    'table-reservation:new': handleRestaurantRefresh,
-    'order:new': handleRestaurantRefresh,
-    'order:status': handleRestaurantRefresh,
-    'dashboard:refresh': handleRestaurantRefresh,
-  });
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async ({ silent = false } = {}) => {
     try {
+      if (!silent) setLoading(true);
       const [catRes, menuRes, tableRes] = await Promise.all([
         api.get('/restaurant/categories'),
         api.get('/restaurant/menu-items'),
@@ -45,11 +35,22 @@ export default function Restaurant() {
       setMenuItems(menuRes.data);
       setTables(tableRes.data);
     } catch (error) {
-      toast.error('Failed to load restaurant data');
+      if (!silent) toast.error('Failed to load restaurant data');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Real-time WS: silently stream live data without disturbing the admin
+  const handleRestaurantRefresh = useCallback(() => { fetchData({ silent: true }); }, [fetchData]);
+  useWebSocket(['reservations', 'orders'], {
+    'table-reservation:new': handleRestaurantRefresh,
+    'order:new': handleRestaurantRefresh,
+    'order:status': handleRestaurantRefresh,
+    'dashboard:refresh': handleRestaurantRefresh,
+  });
 
   const openModal = (type, item = null) => {
     setModalType(type);

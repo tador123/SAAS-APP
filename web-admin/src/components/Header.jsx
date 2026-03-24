@@ -5,25 +5,40 @@ import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { useWebSocket } from '../hooks/useWebSocket';
 
+// Reusable AudioContext for notification sounds (avoids browser limits)
+let _audioCtx = null;
+function _getAudioCtx() {
+  if (!_audioCtx || _audioCtx.state === 'closed') {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return _audioCtx;
+}
+
 // Generate a coin-shuffle notification sound using Web Audio API
 function playCoinSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const times = [0, 0.08, 0.16, 0.24, 0.35];
-    const freqs = [1800, 2200, 2000, 2400, 2600];
-    times.forEach((t, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = freqs[i];
-      gain.gain.setValueAtTime(0.15, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.12);
-      osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 0.12);
-    });
-    setTimeout(() => ctx.close(), 1000);
+    const ctx = _getAudioCtx();
+    const play = () => {
+      const times = [0, 0.08, 0.16, 0.24, 0.35];
+      const freqs = [1800, 2200, 2000, 2400, 2600];
+      times.forEach((t, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freqs[i];
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.12);
+        osc.start(ctx.currentTime + t);
+        osc.stop(ctx.currentTime + t + 0.12);
+      });
+    };
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(play);
+    } else {
+      play();
+    }
   } catch {
     // Audio not available
   }

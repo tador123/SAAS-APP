@@ -88,7 +88,7 @@ router.post('/', [
     if (preOrderItems && preOrderItems.length > 0) {
       const menuItemIds = preOrderItems.map(i => parseInt(i.menuItemId));
       const menuItems = await MenuItem.findAll({
-        where: { id: { [Op.in]: menuItemIds }, propertyId, isAvailable: true },
+        where: { id: { [Op.in]: menuItemIds }, [Op.or]: [{ propertyId }, { propertyId: null }], isAvailable: true },
       });
 
       const menuItemMap = new Map(menuItems.map(m => [m.id, m]));

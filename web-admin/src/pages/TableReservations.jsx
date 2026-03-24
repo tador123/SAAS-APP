@@ -44,9 +44,9 @@ export default function TableReservations() {
   const { sorted, sortField, sortDir, requestSort } = useSortable(reservations, 'reservationDate', 'desc');
   const [expandedId, setExpandedId] = useState(null);
 
-  const fetchData = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async (page = 1, { silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const params = { page, limit: 15 };
       if (debouncedSearch) params.search = debouncedSearch;
       if (statusFilter) params.status = statusFilter;
@@ -59,16 +59,16 @@ export default function TableReservations() {
         total: res.data.pagination?.total || 0,
       });
     } catch {
-      toast.error('Failed to load table reservations');
+      if (!silent) toast.error('Failed to load table reservations');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [debouncedSearch, statusFilter, dateFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Real-time WS: auto-refresh when table reservations change
-  const handleTableReservationRefresh = useCallback(() => { fetchData(pagination.page); }, [fetchData, pagination.page]);
+  // Real-time WS: silently stream live data without disturbing the admin
+  const handleTableReservationRefresh = useCallback(() => { fetchData(pagination.page, { silent: true }); }, [fetchData, pagination.page]);
   useWebSocket(['reservations', 'notifications'], {
     'table-reservation:new': handleTableReservationRefresh,
     'dashboard:refresh': handleTableReservationRefresh,
