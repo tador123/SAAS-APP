@@ -178,6 +178,14 @@ router.get('/', async (req, res, next) => {
       offset,
     });
 
+    // Backfill qrToken for any reservations created before the migration
+    for (const r of rows) {
+      if (!r.qrToken && ['pending', 'confirmed'].includes(r.status)) {
+        r.qrToken = crypto.randomBytes(32).toString('hex');
+        await r.save({ fields: ['qrToken'] });
+      }
+    }
+
     res.json({
       reservations: rows,
       pagination: {
