@@ -233,11 +233,6 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       }
       return json;
     });
-      } else {
-        json.currentlyOccupied = false;
-      }
-      return json;
-    });
 
     res.json({ tables: tablesWithSlots, date: checkDate });
   } catch (error) {
