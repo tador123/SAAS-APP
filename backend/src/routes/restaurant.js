@@ -172,28 +172,28 @@ router.get('/tables', authenticate, tenantScope, async (req, res, next) => {
   try {
     const tables = await RestaurantTable.findAll({ where: { propertyId: req.propertyId }, order: [['tableNumber', 'ASC']] });
 
-    // Get today's active reservations to compute effective status
+    // Get today's and upcoming active reservations to compute effective status
     const property = await Property.findByPk(req.propertyId, { attributes: ['timezone'] });
     const tz = property?.timezone || 'UTC';
     const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
 
-    const todayReservations = await TableReservation.findAll({
+    const activeReservations = await TableReservation.findAll({
       where: {
         propertyId: req.propertyId,
-        reservationDate: today,
+        reservationDate: { [Op.gte]: today },
         status: { [Op.in]: ['confirmed', 'seated', 'pending'] },
       },
-      attributes: ['tableId', 'status'],
+      attributes: ['tableId', 'status', 'reservationDate'],
     });
 
-    // Build a map of tableId -> effective status
+    // Build a map of tableId -> effective status (prioritise today, then nearest future)
     const tableStatusMap = {};
-    for (const r of todayReservations) {
+    for (const r of activeReservations) {
       const current = tableStatusMap[r.tableId];
-      // seated > confirmed > pending priority
-      if (r.status === 'seated' || (!current)) {
-        tableStatusMap[r.tableId] = r.status;
-      } else if (r.status === 'confirmed' && current !== 'seated') {
+      // seated (today only) > confirmed > pending
+      if (r.status === 'seated') {
+        tableStatusMap[r.tableId] = 'seated';
+      } else if (!current || current === 'pending') {
         tableStatusMap[r.tableId] = r.status;
       }
     }

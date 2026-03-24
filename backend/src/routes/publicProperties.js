@@ -193,7 +193,8 @@ router.get('/properties/:id/tables', async (req, res, next) => {
 
     // Get reservations for the requested date (or today) to show booked time slots
     const tz = property.timezone || 'UTC';
-    const checkDate = date || new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+    const checkDate = date || today;
 
     const reservations = await TableReservation.findAll({
       where: {
@@ -203,6 +204,18 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       },
       attributes: ['tableId', 'reservationTime', 'partySize', 'status'],
     });
+
+    // Also get all upcoming active reservations to mark tables with any booking
+    const upcomingReservations = await TableReservation.findAll({
+      where: {
+        propertyId: property.id,
+        reservationDate: { [Op.gte]: today },
+        status: { [Op.in]: ['confirmed', 'seated', 'pending'] },
+      },
+      attributes: ['tableId', 'status'],
+    });
+
+    const upcomingTableIds = new Set(upcomingReservations.map(r => r.tableId));
 
     // Group reserved time slots by table
     const reservedSlots = {};
@@ -220,10 +233,12 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       const slots = reservedSlots[t.id] || [];
       json.reservedSlots = slots;
 
-      // Mark if the table has any active reservation today (confirmed or seated)
+      // Mark if the table has any active reservation (today or upcoming)
       if (t.status === 'occupied' || t.status === 'reserved') {
         json.currentlyOccupied = true;
       } else if (slots.some(s => s.status === 'confirmed' || s.status === 'seated')) {
+        json.currentlyOccupied = true;
+      } else if (upcomingTableIds.has(t.id)) {
         json.currentlyOccupied = true;
       } else {
         json.currentlyOccupied = false;
