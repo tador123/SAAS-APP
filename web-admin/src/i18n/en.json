@@ -41,6 +41,7 @@
     "kitchen": "Kitchen Display",
     "folio": "Guest Folio",
     "qrOrdering": "QR Ordering",
+    "tableReservations": "Table Reservations",
     "systemAdmin": "System Admin"
   },
   "auth": {

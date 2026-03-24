@@ -41,6 +41,7 @@
     "kitchen": "Pantalla de Cocina",
     "folio": "Folio de Huésped",
     "qrOrdering": "Pedidos QR",
+    "tableReservations": "Reservas de Mesa",
     "systemAdmin": "Admin del Sistema"
   },
   "auth": {

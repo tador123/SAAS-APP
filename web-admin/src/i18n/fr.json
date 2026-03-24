@@ -41,6 +41,7 @@
     "kitchen": "Affichage Cuisine",
     "folio": "Folio Client",
     "qrOrdering": "Commande QR",
+    "tableReservations": "Réservations de Table",
     "systemAdmin": "Admin Système"
   },
   "auth": {

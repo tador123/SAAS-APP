@@ -32,6 +32,7 @@ const navItems = [
   { to: '/reservations', icon: CalendarCheck, labelKey: 'nav.reservations', hideFor: ['system_admin'] },
   { to: '/housekeeping', icon: Sparkles, labelKey: 'nav.housekeeping', hideFor: ['system_admin'] },
   { to: '/restaurant', icon: UtensilsCrossed, labelKey: 'nav.restaurant', hideFor: ['system_admin'] },
+  { to: '/table-reservations', icon: CalendarCheck, labelKey: 'nav.tableReservations', hideFor: ['system_admin'] },
   { to: '/orders', icon: ClipboardList, labelKey: 'nav.orders', hideFor: ['system_admin'] },
   { to: '/kitchen', icon: ChefHat, labelKey: 'nav.kitchen', hideFor: ['system_admin'] },
   { to: '/invoices', icon: Receipt, labelKey: 'nav.invoices', roles: ['admin', 'manager'] },

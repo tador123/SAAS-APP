@@ -22,6 +22,7 @@ import KitchenDisplay from './pages/KitchenDisplay';
 import GuestFolio from './pages/GuestFolio';
 import QROrdering from './pages/QROrdering';
 import SystemAdmin from './pages/SystemAdmin';
+import TableReservations from './pages/TableReservations';
 import LandingPage from './pages/LandingPage';
 
 function App() {
@@ -56,6 +57,7 @@ function App() {
             <Route path="/rooms" element={<ErrorBoundary><Rooms /></ErrorBoundary>} />
             <Route path="/reservations" element={<ErrorBoundary><Reservations /></ErrorBoundary>} />
             <Route path="/restaurant" element={<ErrorBoundary><Restaurant /></ErrorBoundary>} />
+            <Route path="/table-reservations" element={<ErrorBoundary><TableReservations /></ErrorBoundary>} />
             <Route path="/orders" element={<ErrorBoundary><Orders /></ErrorBoundary>} />
             <Route path="/guests" element={<ErrorBoundary><Guests /></ErrorBoundary>} />
             <Route path="/housekeeping" element={<ErrorBoundary><Housekeeping /></ErrorBoundary>} />

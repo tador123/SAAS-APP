@@ -219,6 +219,10 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       const json = t.toJSON();
       json.reservedSlots = reservedSlots[t.id] || [];
       return json;
+    }).filter(t => {
+      // Hide tables that are currently occupied or have an active reservation right now
+      if (t.status === 'occupied' || t.status === 'reserved') return false;
+      return true;
     });
 
     res.json({ tables: tablesWithSlots, date: checkDate });
