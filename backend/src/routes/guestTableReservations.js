@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const crypto = require('crypto');
 const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const { TableReservation, RestaurantTable, Guest, Property, MenuItem } = require('../models');
@@ -123,6 +124,8 @@ router.post('/', [
       });
     }
 
+    const qrToken = crypto.randomBytes(32).toString('hex');
+
     const reservation = await TableReservation.create({
       tableId,
       guestId: localGuest.id,
@@ -134,6 +137,7 @@ router.post('/', [
       preOrderItems: processedItems,
       preOrderTotal: preOrderTotal.toFixed(2),
       status: 'confirmed',
+      qrToken,
     });
 
     const result = await TableReservation.findByPk(reservation.id, {

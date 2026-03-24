@@ -8,6 +8,7 @@ import Pagination from '../components/Pagination';
 import { useDebounce } from '../hooks/useHelpers';
 import { useCurrency } from '../context/CurrencyContext';
 import { exportCSV, printTable } from '../utils/exportData';
+import GuestQRScanner from '../components/GuestQRScanner';
 import toast from 'react-hot-toast';
 
 const csvColumns = [
@@ -105,6 +106,7 @@ export default function TableReservations() {
           <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="input-field text-sm" aria-label="Filter by date" />
         </div>
         <div className="flex gap-2">
+          <GuestQRScanner mode="table-checkin" onGuestFound={() => fetchData(pagination.page)} />
           <button onClick={() => exportCSV(reservations, csvColumns, `table_reservations_${new Date().toISOString().slice(0, 10)}.csv`)} className="btn-secondary flex items-center gap-2 text-sm" disabled={reservations.length === 0}>
             <Download size={16} /> CSV
           </button>
@@ -173,9 +175,9 @@ export default function TableReservations() {
                                       ? 'bg-green-50 text-green-700 hover:bg-green-100'
                                       : 'btn-primary py-1 px-2'
                               }`}
-                              aria-label={`${s.replace(/_/g, ' ')} reservation for ${r.guest?.firstName}`}
+                              aria-label={`${s === 'completed' ? 'done' : s.replace(/_/g, ' ')} reservation for ${r.guest?.firstName}`}
                             >
-                              {s.replace(/_/g, ' ')}
+                              {s === 'completed' ? 'Done' : s.replace(/_/g, ' ')}
                             </button>
                           ))}
                         </div>

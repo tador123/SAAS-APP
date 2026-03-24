@@ -52,6 +52,12 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
         toast.success(`${guest?.firstName || 'Guest'} ${guest?.lastName || ''} checked in!`);
         // Immediately notify parent to refresh reservations list
         if (onGuestFound) onGuestFound({ guest, reservation: res.data.reservation, checkedIn: true });
+      } else if (mode === 'table-checkin') {
+        const res = await api.post('/table-reservations/checkin-by-qr', { qrToken: cleanToken });
+        const r = res.data.reservation;
+        setResult({ tableReservation: r, seated: true });
+        toast.success(res.data.message);
+        if (onGuestFound) onGuestFound({ reservation: r, seated: true });
       } else {
         const res = await api.get(`/guest-register/scan/${encodeURIComponent(cleanToken)}`);
         setResult({ guest: res.data.guest });
@@ -174,15 +180,16 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
   };
 
   const isCheckin = mode === 'checkin';
-  const buttonLabel = isCheckin ? 'QR Check-In' : 'Scan Guest QR';
-  const modalTitle = isCheckin ? 'Quick Check-In — Scan QR Code' : 'Scan Guest QR Code';
+  const isTableCheckin = mode === 'table-checkin';
+  const buttonLabel = isTableCheckin ? 'Scan Table QR' : isCheckin ? 'QR Check-In' : 'Scan Guest QR';
+  const modalTitle = isTableCheckin ? 'Seat Guest — Scan Table Reservation QR' : isCheckin ? 'Quick Check-In — Scan QR Code' : 'Scan Guest QR Code';
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`flex items-center gap-2 text-sm ${isCheckin ? 'btn-primary' : 'btn-secondary'}`}
-        title={isCheckin ? 'Scan guest QR to check in instantly' : 'Scan guest QR code for quick lookup'}
+        className={`flex items-center gap-2 text-sm ${isCheckin || isTableCheckin ? 'btn-primary' : 'btn-secondary'}`}
+        title={isTableCheckin ? 'Scan table reservation QR to seat guest' : isCheckin ? 'Scan guest QR to check in instantly' : 'Scan guest QR code for quick lookup'}
       >
         <QrCode size={16} /> {buttonLabel}
       </button>
@@ -211,9 +218,11 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
           {tab === 'camera' && (
             <div className="space-y-3">
               <p className="text-sm text-gray-500">
-                {isCheckin
-                  ? 'Point camera at the guest\u2019s QR code to check them in instantly.'
-                  : 'Use your computer\u2019s camera to scan the guest\u2019s QR code.'}
+                {isTableCheckin
+                  ? 'Point camera at the guest\u2019s table reservation QR to seat them.'
+                  : isCheckin
+                    ? 'Point camera at the guest\u2019s QR code to check them in instantly.'
+                    : 'Use your computer\u2019s camera to scan the guest\u2019s QR code.'}
               </p>
 
               <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ minHeight: 320 }}>
@@ -280,7 +289,7 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
                   ) : (
                     <Search size={16} />
                   )}
-                  {isCheckin ? 'Check In' : 'Lookup'}
+                  {isTableCheckin ? 'Seat' : isCheckin ? 'Check In' : 'Lookup'}
                 </button>
               </div>
             </div>
@@ -337,6 +346,37 @@ export default function GuestQRScanner({ onGuestFound, mode = 'checkin' }) {
               >
                 <CheckCircle size={16} />
                 Done
+              </button>
+            </div>
+          )}
+
+          {/* Table reservation seated success */}
+          {result?.seated && result.tableReservation && (
+            <div className="border border-green-200 bg-green-50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2 text-green-700 font-semibold text-lg">
+                <CheckCircle size={22} />
+                Guest Seated!
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Guest:</span>
+                  <p className="font-medium text-gray-900">{result.tableReservation.guest?.firstName} {result.tableReservation.guest?.lastName}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Table:</span>
+                  <p className="font-medium text-gray-900">#{result.tableReservation.table?.tableNumber}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Party Size:</span>
+                  <p className="font-medium text-gray-900">{result.tableReservation.partySize}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Time:</span>
+                  <p className="font-medium text-gray-900">{result.tableReservation.reservationTime?.slice(0, 5)}</p>
+                </div>
+              </div>
+              <button onClick={() => setOpen(false)} className="w-full btn-primary flex items-center justify-center gap-2 mt-2">
+                <CheckCircle size={16} /> Done
               </button>
             </div>
           )}

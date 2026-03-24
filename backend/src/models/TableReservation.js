@@ -51,6 +51,11 @@ const TableReservation = sequelize.define('TableReservation', {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0,
   },
+  qrToken: {
+    type: DataTypes.STRING(64),
+    allowNull: true,
+    unique: true,
+  },
 }, {
   tableName: 'table_reservations',
   timestamps: true,

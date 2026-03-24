@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../services/table_reservation_service.dart';
 
 class TableReservationScreen extends StatefulWidget {
@@ -83,7 +84,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
   Future<void> _reserve() async {
     setState(() => _loading = true);
     try {
-      await TableReservationService.createReservation(
+      final reservation = await TableReservationService.createReservation(
         tableId: widget.table['id'] as int,
         propertyId: widget.property['id'] as int,
         reservationDate: _date.toIso8601String().split('T')[0],
@@ -94,10 +95,18 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Table reserved successfully!'), backgroundColor: Colors.green),
+        final qrToken = reservation['qrToken']?.toString() ?? '';
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => _QRSuccessDialog(
+            qrToken: qrToken,
+            tableNumber: widget.table['tableNumber']?.toString() ?? '',
+            date: '${_date.day}/${_date.month}/${_date.year}',
+            time: _time.format(context),
+          ),
         );
-        context.pop(true);
+        if (mounted) context.pop(true);
       }
     } on DioException catch (e) {
       final msg = e.response?.data is Map ? (e.response!.data as Map)['error'] ?? 'Reservation failed' : 'Reservation failed';
@@ -379,6 +388,70 @@ class _DateTimeTile extends StatelessWidget {
                 Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                 Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QRSuccessDialog extends StatelessWidget {
+  final String qrToken;
+  final String tableNumber;
+  final String date;
+  final String time;
+  const _QRSuccessDialog({required this.qrToken, required this.tableNumber, required this.date, required this.time});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.green.shade50, shape: BoxShape.circle),
+              child: Icon(Icons.check_circle, size: 40, color: Colors.green.shade600),
+            ),
+            const SizedBox(height: 12),
+            Text('Table Reserved!', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+            const SizedBox(height: 4),
+            Text('Table #$tableNumber • $date at $time', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 20),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Text('Show this QR at the restaurant', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 14),
+                    if (qrToken.isNotEmpty)
+                      QrImageView(
+                        data: qrToken,
+                        version: QrVersions.auto,
+                        size: 200,
+                        backgroundColor: Colors.white,
+                        eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF2563EB)),
+                        dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Color(0xFF1E293B)),
+                      )
+                    else
+                      const Text('QR code unavailable'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              child: const Text('Done'),
             ),
           ],
         ),

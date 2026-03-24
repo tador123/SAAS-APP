@@ -129,4 +129,40 @@ router.delete('/:id', authenticate, authorize('admin', 'manager'), tenantScope, 
   }
 });
 
+// POST /api/table-reservations/checkin-by-qr — Scan table reservation QR to seat the guest
+router.post('/checkin-by-qr', authenticate, tenantScope, async (req, res, next) => {
+  try {
+    const { qrToken } = req.body;
+    if (!qrToken || qrToken.trim().length !== 64) {
+      return res.status(400).json({ error: 'Invalid QR token format' });
+    }
+
+    const reservation = await TableReservation.findOne({
+      where: {
+        qrToken: qrToken.trim(),
+        propertyId: req.propertyId,
+        status: { [Op.in]: ['pending', 'confirmed'] },
+      },
+      include: [
+        { model: RestaurantTable, as: 'table', attributes: ['id', 'tableNumber', 'capacity', 'location'] },
+        { model: Guest, as: 'guest', attributes: ['id', 'firstName', 'lastName', 'email', 'phone'] },
+      ],
+    });
+
+    if (!reservation) {
+      return res.status(404).json({ error: 'No active table reservation found for this QR code' });
+    }
+
+    reservation.status = 'seated';
+    await reservation.save();
+
+    res.json({
+      message: `${reservation.guest?.firstName || 'Guest'} ${reservation.guest?.lastName || ''} is now seated at Table #${reservation.table?.tableNumber}`,
+      reservation,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
