@@ -215,14 +215,28 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       });
     }
 
+    // Determine current time in property timezone to mark currently-seated tables
+    const nowLocal = new Date().toLocaleTimeString('en-GB', { timeZone: tz, hour12: false }).slice(0, 5);
+    const nowMinutes = parseInt(nowLocal.split(':')[0]) * 60 + parseInt(nowLocal.split(':')[1]);
+    const isToday = checkDate === new Date().toLocaleDateString('en-CA', { timeZone: tz });
+
     const tablesWithSlots = tables.map(t => {
       const json = t.toJSON();
-      json.reservedSlots = reservedSlots[t.id] || [];
+      const slots = reservedSlots[t.id] || [];
+      json.reservedSlots = slots;
+
+      // Mark if the table is currently occupied (has a 'seated' reservation or status is occupied)
+      if (t.status === 'occupied' || t.status === 'reserved') {
+        json.currentlyOccupied = true;
+      } else if (isToday && slots.some(s => {
+        const slotMin = parseInt(s.time.split(':')[0]) * 60 + parseInt(s.time.split(':')[1]);
+        return s.status === 'seated' || (s.status === 'confirmed' && Math.abs(nowMinutes - slotMin) < 30);
+      })) {
+        json.currentlyOccupied = true;
+      } else {
+        json.currentlyOccupied = false;
+      }
       return json;
-    }).filter(t => {
-      // Hide tables that are currently occupied or have an active reservation right now
-      if (t.status === 'occupied' || t.status === 'reserved') return false;
-      return true;
     });
 
     res.json({ tables: tablesWithSlots, date: checkDate });

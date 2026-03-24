@@ -48,7 +48,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> with SingleTickerPr
       }).toList();
 
       final tableData = results[1] as Map<String, dynamic>;
-      _tableReservations = tableData['data'] as List<dynamic>? ?? [];
+      _tableReservations = tableData['reservations'] as List<dynamic>? ?? [];
 
       setState(() => _loading = false);
     } catch (e) {

@@ -287,13 +287,14 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
         final status = table['status']?.toString() ?? 'available';
         final isAvailable = status == 'available';
         final reservedSlots = table['reservedSlots'] as List<dynamic>? ?? [];
+        final currentlyOccupied = table['currentlyOccupied'] == true;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: isAvailable || reservedSlots.length < 6 // allow if not fully booked
+            onTap: isAvailable && !currentlyOccupied || reservedSlots.length < 6
                 ? () async {
                     final result = await Navigator.push(
                       context,
@@ -313,15 +314,34 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
-                    child: Icon(Icons.table_restaurant, color: isAvailable ? Colors.green : Colors.orange),
+                    backgroundColor: currentlyOccupied
+                        ? Colors.red.shade50
+                        : isAvailable ? Colors.green.shade50 : Colors.orange.shade50,
+                    child: Icon(Icons.table_restaurant, color: currentlyOccupied
+                        ? Colors.red
+                        : isAvailable ? Colors.green : Colors.orange),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Table ${table['tableNumber']}', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        Row(
+                          children: [
+                            Text('Table ${table['tableNumber']}', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                            if (currentlyOccupied) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text('Occupied', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.red.shade800)),
+                              ),
+                            ],
+                          ],
+                        ),
                         const SizedBox(height: 2),
                         Text('${table['capacity']} seats  •  ${table['location'] ?? 'Indoor'}',
                             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
@@ -343,7 +363,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
                     ),
                   ),
                   FilledButton.tonal(
-                    onPressed: isAvailable || reservedSlots.length < 6
+                    onPressed: isAvailable && !currentlyOccupied || reservedSlots.length < 6
                         ? () async {
                             final result = await Navigator.push(
                               context,
