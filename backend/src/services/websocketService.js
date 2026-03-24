@@ -85,7 +85,7 @@ class WebSocketService {
   /** New order placed */
   emitNewOrder(order) {
     if (!this.io) return;
-    this.io.to('kitchen').to('orders').to('dashboard').emit('order:new', order);
+    this.io.to('kitchen').to('orders').to('dashboard').to('notifications').emit('order:new', order);
   }
 
   /** Order status changed */
@@ -108,7 +108,13 @@ class WebSocketService {
   /** New reservation created */
   emitNewReservation(reservation) {
     if (!this.io) return;
-    this.io.to('reservations').to('dashboard').emit('reservation:new', reservation);
+    this.io.to('reservations').to('dashboard').to('notifications').emit('reservation:new', reservation);
+  }
+
+  /** New table reservation created */
+  emitNewTableReservation(reservation) {
+    if (!this.io) return;
+    this.io.to('reservations').to('dashboard').to('notifications').emit('table-reservation:new', reservation);
   }
 
   /** Reservation status changed */

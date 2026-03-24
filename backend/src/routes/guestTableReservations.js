@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const { TableReservation, RestaurantTable, Guest, Property, MenuItem } = require('../models');
 const { authenticateGuest } = require('../middleware/guestAuth');
+const websocketService = require('../services/websocketService');
 
 // All routes require guest authentication
 router.use(authenticateGuest);
@@ -144,6 +145,12 @@ router.post('/', [
       include: [
         { model: RestaurantTable, as: 'table', attributes: ['id', 'tableNumber', 'capacity', 'location'] },
       ],
+    });
+
+    // Emit real-time event for admin dashboard
+    websocketService.emitNewTableReservation({
+      ...result.toJSON(),
+      guestName: `${localGuest.firstName} ${localGuest.lastName}`,
     });
 
     res.status(201).json({ reservation: result });

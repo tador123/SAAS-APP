@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { body, validationResult } = require('express-validator');
 const { Op } = require('sequelize');
-const { MenuCategory, MenuItem, RestaurantTable, TableReservation, Property } = require('../models');
+const { MenuCategory, MenuItem, RestaurantTable, TableReservation, Property, Guest } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { tenantScope } = require('../middleware/tenantScope');
 const { checkTableLimit } = require('../middleware/subscription');
@@ -183,19 +183,40 @@ router.get('/tables', authenticate, tenantScope, async (req, res, next) => {
         reservationDate: { [Op.gte]: today },
         status: { [Op.in]: ['confirmed', 'seated', 'pending'] },
       },
-      attributes: ['tableId', 'status', 'reservationDate'],
+      include: [
+        { model: Guest, as: 'guest', attributes: ['id', 'firstName', 'lastName', 'email', 'phone'] },
+      ],
     });
 
-    // Build a map of tableId -> effective status (prioritise today, then nearest future)
+    // Build maps of tableId -> effective status & reservation details
     const tableStatusMap = {};
+    const tableReservationMap = {};
     for (const r of activeReservations) {
       const current = tableStatusMap[r.tableId];
       // seated (today only) > confirmed > pending
       if (r.status === 'seated') {
         tableStatusMap[r.tableId] = 'seated';
+        tableReservationMap[r.tableId] = r;
       } else if (!current || current === 'pending') {
         tableStatusMap[r.tableId] = r.status;
+        if (!tableReservationMap[r.tableId]) tableReservationMap[r.tableId] = r;
       }
+    }
+
+    // Collect all reservations per table for pre-order listing
+    const tableAllReservations = {};
+    for (const r of activeReservations) {
+      if (!tableAllReservations[r.tableId]) tableAllReservations[r.tableId] = [];
+      tableAllReservations[r.tableId].push({
+        id: r.id,
+        reservationDate: r.reservationDate,
+        reservationTime: r.reservationTime,
+        partySize: r.partySize,
+        status: r.status,
+        guestName: r.guest ? `${r.guest.firstName} ${r.guest.lastName}` : 'Guest',
+        preOrderItems: r.preOrderItems || [],
+        preOrderTotal: r.preOrderTotal || 0,
+      });
     }
 
     const enriched = tables.map(t => {
@@ -206,6 +227,7 @@ router.get('/tables', authenticate, tenantScope, async (req, res, next) => {
       } else if (reservationStatus === 'confirmed' || reservationStatus === 'pending') {
         json.status = json.status === 'available' ? 'reserved' : json.status;
       }
+      json.activeReservations = tableAllReservations[t.id] || [];
       return json;
     });
 

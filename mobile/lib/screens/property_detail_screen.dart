@@ -294,7 +294,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: isAvailable && !currentlyOccupied || reservedSlots.length < 6
+            onTap: !currentlyOccupied && reservedSlots.length < 6
                 ? () async {
                     final result = await Navigator.push(
                       context,
@@ -363,7 +363,7 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> with Single
                     ),
                   ),
                   FilledButton.tonal(
-                    onPressed: isAvailable && !currentlyOccupied || reservedSlots.length < 6
+                    onPressed: !currentlyOccupied && reservedSlots.length < 6
                         ? () async {
                             final result = await Navigator.push(
                               context,

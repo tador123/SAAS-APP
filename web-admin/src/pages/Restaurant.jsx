@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, UtensilsCrossed, Upload, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, UtensilsCrossed, Upload, X, ShoppingBag } from 'lucide-react';
 import api from '../api/axios';
 import Modal from '../components/Modal';
 import { useConfirm } from '../components/ConfirmDialog';
@@ -198,17 +198,42 @@ export default function Restaurant() {
             <button onClick={() => openModal('table')} className="btn-primary flex items-center gap-2"><Plus size={18} /> Add Table</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {tables.map((table) => (
-              <div key={table.id} onClick={() => openModal('table', table)}
-                className={`card text-center cursor-pointer hover:shadow-md transition-all ${table.status === 'occupied' ? 'border-red-200 bg-red-50' : table.status === 'reserved' ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}>
-                <h3 className="text-lg font-bold text-gray-900">{table.tableNumber}</h3>
-                <p className="text-sm text-gray-500">{table.capacity} seats</p>
-                <p className="text-xs text-gray-400 capitalize mt-1">{table.location}</p>
-                <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${table.status === 'available' ? 'bg-green-200 text-green-800' : table.status === 'occupied' ? 'bg-red-200 text-red-800' : 'bg-yellow-200 text-yellow-800'}`}>
-                  {table.status}
-                </span>
-              </div>
-            ))}
+            {tables.map((table) => {
+              const reservations = table.activeReservations || [];
+              const hasPreOrders = reservations.some(r => r.preOrderItems?.length > 0);
+              return (
+                <div key={table.id} onClick={() => openModal('table', table)}
+                  className={`card text-center cursor-pointer hover:shadow-md transition-all ${table.status === 'occupied' ? 'border-red-200 bg-red-50' : table.status === 'reserved' ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}>
+                  <h3 className="text-lg font-bold text-gray-900">{table.tableNumber}</h3>
+                  <p className="text-sm text-gray-500">{table.capacity} seats</p>
+                  <p className="text-xs text-gray-400 capitalize mt-1">{table.location}</p>
+                  <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${table.status === 'available' ? 'bg-green-200 text-green-800' : table.status === 'occupied' ? 'bg-red-200 text-red-800' : 'bg-yellow-200 text-yellow-800'}`}>
+                    {table.status}
+                  </span>
+                  {reservations.length > 0 && (
+                    <div className="mt-2 text-left border-t border-gray-200 pt-2">
+                      {reservations.map((r) => (
+                        <div key={r.id} className="mb-1">
+                          <p className="text-xs font-medium text-gray-700 truncate">{r.guestName}</p>
+                          <p className="text-xs text-gray-400">{r.reservationDate} {r.reservationTime?.slice(0, 5)}</p>
+                          {r.preOrderItems?.length > 0 && (
+                            <div className="mt-1">
+                              <div className="flex items-center gap-1 text-xs text-orange-600 font-medium">
+                                <ShoppingBag size={10} /> Pre-order
+                              </div>
+                              {r.preOrderItems.map((item, i) => (
+                                <p key={i} className="text-xs text-gray-500 truncate">{item.quantity}x {item.name}</p>
+                              ))}
+                              <p className="text-xs font-semibold text-gray-700">{formatCurrency(Number(r.preOrderTotal || 0))}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
