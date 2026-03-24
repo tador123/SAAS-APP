@@ -215,18 +215,15 @@ router.get('/properties/:id/tables', async (req, res, next) => {
       });
     }
 
-    // Determine if checking today's date
-    const isToday = checkDate === new Date().toLocaleDateString('en-CA', { timeZone: tz });
-
     const tablesWithSlots = tables.map(t => {
       const json = t.toJSON();
       const slots = reservedSlots[t.id] || [];
       json.reservedSlots = slots;
 
-      // Mark if the table is currently occupied (has a confirmed or seated reservation today)
+      // Mark if the table has any active reservation today (confirmed or seated)
       if (t.status === 'occupied' || t.status === 'reserved') {
         json.currentlyOccupied = true;
-      } else if (isToday && slots.some(s => s.status === 'confirmed' || s.status === 'seated')) {
+      } else if (slots.some(s => s.status === 'confirmed' || s.status === 'seated')) {
         json.currentlyOccupied = true;
       } else {
         json.currentlyOccupied = false;

@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const { body, validationResult } = require('express-validator');
-const { MenuCategory, MenuItem, RestaurantTable } = require('../models');
+const { Op } = require('sequelize');
+const { MenuCategory, MenuItem, RestaurantTable, TableReservation, Property } = require('../models');
 const { authenticate, authorize } = require('../middleware/auth');
 const { tenantScope } = require('../middleware/tenantScope');
 const { checkTableLimit } = require('../middleware/subscription');
@@ -170,7 +171,45 @@ router.delete('/menu-items/:id', authenticate, authorize('admin', 'manager'), te
 router.get('/tables', authenticate, tenantScope, async (req, res, next) => {
   try {
     const tables = await RestaurantTable.findAll({ where: { propertyId: req.propertyId }, order: [['tableNumber', 'ASC']] });
-    res.json(tables);
+
+    // Get today's active reservations to compute effective status
+    const property = await Property.findByPk(req.propertyId, { attributes: ['timezone'] });
+    const tz = property?.timezone || 'UTC';
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+
+    const todayReservations = await TableReservation.findAll({
+      where: {
+        propertyId: req.propertyId,
+        reservationDate: today,
+        status: { [Op.in]: ['confirmed', 'seated', 'pending'] },
+      },
+      attributes: ['tableId', 'status'],
+    });
+
+    // Build a map of tableId -> effective status
+    const tableStatusMap = {};
+    for (const r of todayReservations) {
+      const current = tableStatusMap[r.tableId];
+      // seated > confirmed > pending priority
+      if (r.status === 'seated' || (!current)) {
+        tableStatusMap[r.tableId] = r.status;
+      } else if (r.status === 'confirmed' && current !== 'seated') {
+        tableStatusMap[r.tableId] = r.status;
+      }
+    }
+
+    const enriched = tables.map(t => {
+      const json = t.toJSON();
+      const reservationStatus = tableStatusMap[t.id];
+      if (reservationStatus === 'seated') {
+        json.status = 'occupied';
+      } else if (reservationStatus === 'confirmed' || reservationStatus === 'pending') {
+        json.status = json.status === 'available' ? 'reserved' : json.status;
+      }
+      return json;
+    });
+
+    res.json(enriched);
   } catch (error) {
     next(error);
   }
