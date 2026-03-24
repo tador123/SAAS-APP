@@ -9,6 +9,7 @@ import { useDebounce } from '../hooks/useHelpers';
 import { useCurrency } from '../context/CurrencyContext';
 import { exportCSV, printTable } from '../utils/exportData';
 import GuestQRScanner from '../components/GuestQRScanner';
+import { useWebSocket } from '../hooks/useWebSocket';
 import toast from 'react-hot-toast';
 
 const csvColumns = [
@@ -65,6 +66,13 @@ export default function TableReservations() {
   }, [debouncedSearch, statusFilter, dateFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Real-time WS: auto-refresh when table reservations change
+  const handleTableReservationRefresh = useCallback(() => { fetchData(pagination.page); }, [fetchData, pagination.page]);
+  useWebSocket(['reservations', 'notifications'], {
+    'table-reservation:new': handleTableReservationRefresh,
+    'dashboard:refresh': handleTableReservationRefresh,
+  });
 
   const handleStatusChange = async (id, newStatus) => {
     try {

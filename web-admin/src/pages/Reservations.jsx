@@ -86,7 +86,11 @@ export default function Reservations() {
 
   // Real-time WS: auto-refresh when reservations change
   const handleReservationsRefresh = useCallback(() => { fetchData(pagination.page); }, [fetchData, pagination.page]);
-  useWebSocket('reservations', { 'dashboard:refresh': handleReservationsRefresh });
+  useWebSocket(['reservations', 'notifications'], {
+    'reservation:new': handleReservationsRefresh,
+    'reservation:status': handleReservationsRefresh,
+    'dashboard:refresh': handleReservationsRefresh,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();

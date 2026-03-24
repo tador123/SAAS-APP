@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, UtensilsCrossed, Upload, X, ShoppingBag } from 'lucide-react';
 import api from '../api/axios';
 import Modal from '../components/Modal';
@@ -6,6 +6,7 @@ import { useConfirm } from '../components/ConfirmDialog';
 import { useSubmitting } from '../hooks/useHelpers';
 import toast from 'react-hot-toast';
 import { useCurrency } from '../context/CurrencyContext';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export default function Restaurant() {
   const { formatCurrency, currency } = useCurrency();
@@ -23,6 +24,15 @@ export default function Restaurant() {
   const confirm = useConfirm();
 
   useEffect(() => { fetchData(); }, []);
+
+  // Real-time WS: auto-refresh tables when reservations change
+  const handleRestaurantRefresh = useCallback(() => { fetchData(); }, []);
+  useWebSocket(['reservations', 'orders'], {
+    'table-reservation:new': handleRestaurantRefresh,
+    'order:new': handleRestaurantRefresh,
+    'order:status': handleRestaurantRefresh,
+    'dashboard:refresh': handleRestaurantRefresh,
+  });
 
   const fetchData = async () => {
     try {

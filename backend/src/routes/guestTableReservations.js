@@ -86,7 +86,7 @@ router.post('/', [
     let processedItems = [];
     let preOrderTotal = 0;
     if (preOrderItems && preOrderItems.length > 0) {
-      const menuItemIds = preOrderItems.map(i => i.menuItemId);
+      const menuItemIds = preOrderItems.map(i => parseInt(i.menuItemId));
       const menuItems = await MenuItem.findAll({
         where: { id: { [Op.in]: menuItemIds }, propertyId, isAvailable: true },
       });
@@ -94,9 +94,9 @@ router.post('/', [
       const menuItemMap = new Map(menuItems.map(m => [m.id, m]));
 
       for (const item of preOrderItems) {
-        const menuItem = menuItemMap.get(item.menuItemId);
+        const menuItem = menuItemMap.get(parseInt(item.menuItemId));
         if (!menuItem) continue;
-        const qty = Math.max(1, item.quantity || 1);
+        const qty = Math.max(1, parseInt(item.quantity) || 1);
         processedItems.push({
           menuItemId: menuItem.id,
           name: menuItem.name,

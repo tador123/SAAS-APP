@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 const logger = require('./logger');
+const { User } = require('../models');
 
 /**
  * WebSocket service — provides real-time events for:
@@ -53,8 +54,20 @@ class WebSocketService {
       }
     });
 
-    this.io.on('connection', (socket) => {
+    this.io.on('connection', async (socket) => {
       logger.debug('WS connected', { socketId: socket.id, userId: socket.userId });
+
+      // Auto-join user to property-scoped rooms
+      try {
+        const user = await User.findByPk(socket.userId, { attributes: ['id', 'propertyId'] });
+        if (user?.propertyId) {
+          socket.propertyId = user.propertyId;
+          socket.join(`property:${user.propertyId}`);
+          logger.debug('WS auto-joined property room', { socketId: socket.id, propertyId: user.propertyId });
+        }
+      } catch (err) {
+        logger.warn('WS failed to lookup user property', { error: err.message });
+      }
 
       // Clients join rooms based on their role (sent from client)
       socket.on('join', (rooms) => {
@@ -82,16 +95,26 @@ class WebSocketService {
   // Event emitters — call these from route handlers
   // ─────────────────────────────────────────────
 
+  /**
+   * Helper: emit to property-scoped room + global rooms.
+   * If propertyId is provided, also emits to `property:<id>`.
+   */
+  _emitToProperty(propertyId, globalRooms, event, data) {
+    if (!this.io) return;
+    let target = this.io;
+    globalRooms.forEach(room => { target = target.to(room); });
+    if (propertyId) target = target.to(`property:${propertyId}`);
+    target.emit(event, data);
+  }
+
   /** New order placed */
   emitNewOrder(order) {
-    if (!this.io) return;
-    this.io.to('kitchen').to('orders').to('dashboard').to('notifications').emit('order:new', order);
+    this._emitToProperty(order.propertyId, ['kitchen', 'orders', 'dashboard', 'notifications'], 'order:new', order);
   }
 
   /** Order status changed */
   emitOrderStatusChange(order) {
-    if (!this.io) return;
-    this.io.to('kitchen').to('orders').to('dashboard').emit('order:status', {
+    this._emitToProperty(order.propertyId, ['kitchen', 'orders', 'dashboard'], 'order:status', {
       id: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
@@ -101,26 +124,22 @@ class WebSocketService {
 
   /** Order updated (items/totals changed) */
   emitOrderUpdated(order) {
-    if (!this.io) return;
-    this.io.to('kitchen').to('orders').emit('order:updated', order);
+    this._emitToProperty(order.propertyId, ['kitchen', 'orders'], 'order:updated', order);
   }
 
   /** New reservation created */
   emitNewReservation(reservation) {
-    if (!this.io) return;
-    this.io.to('reservations').to('dashboard').to('notifications').emit('reservation:new', reservation);
+    this._emitToProperty(reservation.propertyId, ['reservations', 'dashboard', 'notifications'], 'reservation:new', reservation);
   }
 
   /** New table reservation created */
   emitNewTableReservation(reservation) {
-    if (!this.io) return;
-    this.io.to('reservations').to('dashboard').to('notifications').emit('table-reservation:new', reservation);
+    this._emitToProperty(reservation.propertyId, ['reservations', 'dashboard', 'notifications'], 'table-reservation:new', reservation);
   }
 
   /** Reservation status changed */
   emitReservationStatusChange(reservation) {
-    if (!this.io) return;
-    this.io.to('reservations').to('dashboard').emit('reservation:status', {
+    this._emitToProperty(reservation.propertyId, ['reservations', 'dashboard'], 'reservation:status', {
       id: reservation.id,
       status: reservation.status,
       updatedAt: reservation.updatedAt,
@@ -129,8 +148,7 @@ class WebSocketService {
 
   /** Invoice created or paid */
   emitInvoiceEvent(type, invoice) {
-    if (!this.io) return;
-    this.io.to('dashboard').emit(`invoice:${type}`, {
+    this._emitToProperty(invoice.propertyId, ['dashboard'], `invoice:${type}`, {
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
       total: invoice.total,
@@ -144,16 +162,17 @@ class WebSocketService {
     this.io.to('notifications').emit('notification', message);
   }
 
-  /** Dashboard stats updated */
-  emitDashboardRefresh() {
+  /** Dashboard stats updated — property-scoped */
+  emitDashboardRefresh(propertyId) {
     if (!this.io) return;
-    this.io.to('dashboard').emit('dashboard:refresh');
+    let target = this.io.to('dashboard');
+    if (propertyId) target = target.to(`property:${propertyId}`);
+    target.emit('dashboard:refresh');
   }
 
   /** Housekeeping task updated */
   emitHousekeepingUpdate(task) {
-    if (!this.io) return;
-    this.io.to('housekeeping').to('dashboard').emit('housekeeping:update', task);
+    this._emitToProperty(task.propertyId, ['housekeeping', 'dashboard'], 'housekeeping:update', task);
   }
 
   /** Kitchen display refresh */

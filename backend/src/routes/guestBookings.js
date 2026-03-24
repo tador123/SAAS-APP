@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const { body, validationResult } = require('express-validator');
 const { Reservation, Room, Property, Guest } = require('../models');
 const { authenticateGuest } = require('../middleware/guestAuth');
+const websocketService = require('../services/websocketService');
 
 // All routes require guest authentication
 router.use(authenticateGuest);
@@ -104,8 +105,13 @@ router.post('/', [
       include: [
         { model: Room, as: 'room', attributes: ['id', 'roomNumber', 'type', 'price', 'images'] },
         { model: Property, as: 'property', attributes: ['id', 'name', 'address', 'city', 'images', 'phone'] },
+        { model: Guest, as: 'guest', attributes: ['id', 'firstName', 'lastName', 'email'] },
       ],
     });
+
+    // Emit real-time notification for property admin
+    websocketService.emitNewReservation(result.toJSON());
+    websocketService.emitDashboardRefresh(room.propertyId);
 
     res.status(201).json({ reservation: result });
   } catch (error) {
